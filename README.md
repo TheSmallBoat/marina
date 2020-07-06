@@ -5,6 +5,8 @@ A streaming-hub micro-service over the peer-mesh network.
 1. The twins-tunnel module is a tunnel that pair by the peer-nodes, the local twin is the mirror of the remote twin,
  and the worker will unconditional push the packets to the remote twin pool from the local continually.
  While the remote twin got the packets, it will process according to consumers or cache those packets. 
+ The role of the local twin pool is to gather all the packets that meet the requirements together and
+  push them through a stream channel.
  
 2. The topic-manager module is a manager to pickup the packet group by topics from a pool of the publisher,
  and match the subscribers to find the local twin mirror and then put those packets to the local twin pool. 
