@@ -2,6 +2,7 @@ package marina
 
 import (
 	"fmt"
+	"sync"
 	"sync/atomic"
 
 	"github.com/lithdew/kademlia"
@@ -16,14 +17,17 @@ type twin struct {
 	online  bool   // the flag about the activity of the peer-node twin, if true means that can work, otherwise cannot.
 	counter uint32 // the counter for the push operation while online.
 	offNum  uint32 // the counter for the push operation while offline.
+	mu      sync.RWMutex
 }
 
-func NewTwin(peerNodeId *kademlia.ID) *twin {
+func newTwin(peerNodeId *kademlia.ID) *twin {
 	return &twin{
 		kadId:   peerNodeId,
 		tc:      make(chan []byte, defaultTwinChannelSize),
+		online:  false,
 		counter: uint32(0),
-		online:  true,
+		offNum:  uint32(0),
+		mu:      sync.RWMutex{},
 	}
 }
 
@@ -38,4 +42,32 @@ func (t *twin) Push(payLoad []byte) error {
 	atomic.AddUint32(&t.counter, uint32(1))
 	t.tc <- payLoad
 	return nil
+}
+
+func (t *twin) turnToOffline() {
+	t.mu.RLock()
+	defer t.mu.RUnlock()
+
+	t.online = false
+}
+
+func (t *twin) turnToOnline() {
+	t.mu.RLock()
+	defer t.mu.RUnlock()
+
+	t.online = true
+}
+
+func (t *twin) setOnlineStatus(status bool) {
+	t.mu.RLock()
+	defer t.mu.RUnlock()
+
+	t.online = status
+}
+
+func (t *twin) reset() {
+	t.kadId = nil
+	t.online = false
+	t.counter = 0
+	t.offNum = 0
 }
