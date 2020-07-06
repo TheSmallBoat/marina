@@ -1,7 +1,6 @@
 package marina
 
 import (
-	"reflect"
 	"sync/atomic"
 )
 
@@ -36,7 +35,7 @@ func (wc *workerChannel) executeTask(taskId uint16) {
 		for {
 			select {
 			case task, ok := <-wc.taskQueue[taskId]:
-				if ok && task != nil && reflect.TypeOf(task) == reflect.TypeOf(func() {}) {
+				if ok && task != nil {
 					// Execute the task.
 					task()
 				}
