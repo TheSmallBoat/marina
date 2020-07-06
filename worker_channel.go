@@ -19,9 +19,10 @@ func NewWorkerChannel(maxWorkers uint16) *workerChannel {
 		maxWorkers = 1
 	}
 	wch := &workerChannel{
-		maxWorkers: maxWorkers,
-		taskQueue:  make([]chan func(), maxWorkers),
-		exit:       make([]chan struct{}, maxWorkers),
+		maxWorkers:  maxWorkers,
+		taskCounter: uint32(0),
+		taskQueue:   make([]chan func(), maxWorkers),
+		exit:        make([]chan struct{}, maxWorkers),
 	}
 
 	// Start the task dispatcher.
