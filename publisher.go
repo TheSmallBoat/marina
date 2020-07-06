@@ -1,34 +1,29 @@
 package marina
 
-const defaultPublisherChannelSize = 32
+const defaultPublisherWorkerChannelWorker = 32
 
+// The publish stream packets come from the producers.
 type publisher struct {
-	ch   chan packet
-	exit chan struct{}
+	wc *workerChannel
 }
 
 func NewPublisher() *publisher {
-	return &publisher{ch: make(chan packet, defaultPublisherChannelSize), exit: make(chan struct{}, 0)}
+	return &publisher{wc: NewWorkerChannel(defaultPublisherWorkerChannelWorker)}
 }
 
-func (p *publisher) Publish(pkt *packet) {
-	p.ch <- *pkt
+func (p *publisher) Publish(pkt *streamPacket) {
+	if pkt.qos == byte(1) {
+		// process response
+	}
+	p.wc.SubmitTask(func() { processPublishStreamPacket(pkt.topic, pkt.body) })
+
+}
+
+// To find the matched topic, and put the StreamPacket to the twin-pool
+func processPublishStreamPacket(topic []byte, body []byte) {
+
 }
 
 func (p *publisher) Close() {
-	p.exit <- struct{}{}
-}
-
-func (p *publisher) Start() {
-	for {
-		select {
-		case <-p.exit:
-			return
-		case _, ok := <-p.ch:
-			if ok {
-				continue
-			}
-
-		}
-	}
+	p.wc.Close()
 }
