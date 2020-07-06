@@ -13,8 +13,9 @@ type twin struct {
 	kadId *kademlia.ID // the peer node ID
 	tc    chan []byte
 
-	counter uint32 // the counter for the push operation.
 	online  bool   // the flag about the activity of the peer-node twin, if true means that can work, otherwise cannot.
+	counter uint32 // the counter for the push operation while online.
+	offNum  uint32 // the counter for the push operation while offline.
 }
 
 func NewTwin(peerNodeId *kademlia.ID) *twin {
@@ -30,6 +31,7 @@ func (t *twin) Push(payLoad []byte) error {
 	if !t.online {
 		//maybe need to cache the payload.
 
+		atomic.AddUint32(&t.offNum, uint32(1))
 		return fmt.Errorf("the '%s:%d' host's twin is not online", t.kadId.Host.String(), t.kadId.Port)
 	}
 
