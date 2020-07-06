@@ -4,7 +4,7 @@ import (
 	"sync/atomic"
 )
 
-const defaultChannelSize = 32 // The default channel size for the single task queue
+const defaultWorkerChannelSize = 32 // The default channel size for the single task queue
 
 type workerChannel struct {
 	maxWorkers  uint16
@@ -49,7 +49,7 @@ func (wc *workerChannel) executeTask(taskId uint16) {
 
 func (wc *workerChannel) dispatch() {
 	for i := uint16(0); i < wc.maxWorkers; i++ {
-		wc.taskQueue[i] = make(chan func(), defaultChannelSize)
+		wc.taskQueue[i] = make(chan func(), defaultWorkerChannelSize)
 		wc.exit[i] = make(chan struct{}, 0)
 		wc.executeTask(i)
 	}
