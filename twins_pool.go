@@ -21,16 +21,13 @@ func (tp *twinsPool) length() int {
 
 func (tp *twinsPool) exist(peerNodeId *kademlia.ID) (*twin, bool) {
 	t, exist := tp.m[peerNodeId.Pub.String()]
-	if exist {
-		t.turnToOnline()
-		return t, exist
-	}
-	return nil, exist
+	return t, exist
 }
 
 func (tp *twinsPool) acquire(peerNodeId *kademlia.ID) *twin {
 	t, exist := tp.exist(peerNodeId)
 	if exist {
+		t.turnToOnline()
 		return t
 	}
 
