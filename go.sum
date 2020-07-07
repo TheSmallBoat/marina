@@ -1,3 +1,5 @@
+github.com/TheSmallBoat/cabinet v0.0.0-20200707035532-50b01482f07d h1:fDMvxgYnqsnQGhj8VaAn04YBxmRGCjTOPjATWfCHnpg=
+github.com/TheSmallBoat/cabinet v0.0.0-20200707035532-50b01482f07d/go.mod h1:1QTHKtsy2L4tD1ck/R9oyGNZNsOmSZCAD1qAbG+wcVY=
 github.com/TheSmallBoat/carlo v0.0.0-20200702022928-abdf805b695c h1:2mD8A7d10xUkWDomBpAu2/D07jFLBtx2RHsUDkAxAvk=
 github.com/TheSmallBoat/carlo v0.0.0-20200702022928-abdf805b695c/go.mod h1:j2JKEcdnoR7Bfpth3R+QP3zY6paj4FfdVmAqaQYoCfY=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
