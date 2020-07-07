@@ -23,10 +23,10 @@ func myFunc() {
 	wg.Done()
 }
 
-func TestWorkerChannel(t *testing.T) {
+func TestWorkerPool(t *testing.T) {
 	defer goleak.VerifyNone(t)
 
-	var wc = NewWorkerChannel(8)
+	var wc = NewWorkerPool(8)
 	defer wc.Close()
 
 	assert.Equal(t, wc.maxWorkers, uint16(8))
@@ -40,11 +40,11 @@ func TestWorkerChannel(t *testing.T) {
 	require.Equal(t, wc.taskCounter*uint32(step), uint32(sum))
 }
 
-func BenchmarkWorkerChannel(b *testing.B) {
+func BenchmarkWorkerPool(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 
-	var wc = NewWorkerChannel(8)
+	var wc = NewWorkerPool(8)
 	defer wc.Close()
 
 	assert.Equal(b, wc.maxWorkers, uint16(8))

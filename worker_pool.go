@@ -4,21 +4,21 @@ import (
 	"sync/atomic"
 )
 
-const defaultWorkerChannelSize = 32 // The default channel size for the single task queue
+const defaultWorkerPoolSize = 32 // The default Pool size for the single task queue
 
-type workerChannel struct {
+type workerPool struct {
 	maxWorkers  uint16
 	taskCounter uint32
 	taskQueue   []chan func()
 	exit        []chan struct{}
 }
 
-func NewWorkerChannel(maxWorkers uint16) *workerChannel {
+func NewWorkerPool(maxWorkers uint16) *workerPool {
 	// There must be at least one worker.
 	if maxWorkers < 1 {
 		maxWorkers = 1
 	}
-	wch := &workerChannel{
+	wch := &workerPool{
 		maxWorkers:  maxWorkers,
 		taskCounter: uint32(0),
 		taskQueue:   make([]chan func(), maxWorkers),
@@ -31,7 +31,7 @@ func NewWorkerChannel(maxWorkers uint16) *workerChannel {
 	return wch
 }
 
-func (wc *workerChannel) executeTask(taskId uint16) {
+func (wc *workerPool) executeTask(taskId uint16) {
 	go func() {
 		for {
 			select {
@@ -47,26 +47,26 @@ func (wc *workerChannel) executeTask(taskId uint16) {
 	}()
 }
 
-func (wc *workerChannel) dispatch() {
+func (wc *workerPool) dispatch() {
 	for i := uint16(0); i < wc.maxWorkers; i++ {
-		wc.taskQueue[i] = make(chan func(), defaultWorkerChannelSize)
+		wc.taskQueue[i] = make(chan func(), defaultWorkerPoolSize)
 		wc.exit[i] = make(chan struct{}, 0)
 		wc.executeTask(i)
 	}
 }
 
-func (wc *workerChannel) Close() {
+func (wc *workerPool) Close() {
 	for i := uint16(0); i < wc.maxWorkers; i++ {
 		wc.exit[i] <- struct{}{}
 	}
 }
 
-func (wc *workerChannel) getId() uint16 {
+func (wc *workerPool) getId() uint16 {
 	atomic.AddUint32(&wc.taskCounter, uint32(1))
 	return uint16(wc.taskCounter % uint32(wc.maxWorkers))
 }
 
-func (wc *workerChannel) SubmitTask(task func()) {
+func (wc *workerPool) SubmitTask(task func()) {
 	if task != nil {
 		wc.taskQueue[wc.getId()] <- task
 	}
