@@ -1,21 +1,21 @@
 package marina
 
-const defaultPublisherWorkerChannelWorker = 32
+const defaultPublisherMaxWorkers = 32
 
 // The publish stream packets come from the producers.
 type publisher struct {
-	wc *workerChannel
+	wp *workerPool
 }
 
 func NewPublisher() *publisher {
-	return &publisher{wc: NewWorkerChannel(defaultPublisherWorkerChannelWorker)}
+	return &publisher{wp: NewWorkerPool(defaultPublisherMaxWorkers)}
 }
 
 func (p *publisher) Publish(pkt *streamPacket) {
 	if pkt.qos == byte(1) {
 		// process response
 	}
-	p.wc.SubmitTask(func() { processPublishStreamPacket(pkt.topic, pkt.body) })
+	p.wp.SubmitTask(func() { processPublishStreamPacket(pkt.topic, pkt.body) })
 
 }
 
@@ -25,5 +25,5 @@ func processPublishStreamPacket(topic []byte, body []byte) {
 }
 
 func (p *publisher) Close() {
-	p.wc.Close()
+	p.wp.Close()
 }
