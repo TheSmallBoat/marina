@@ -16,7 +16,7 @@ A streaming-hub micro-service over the peer-mesh network.
  
 4. The subscriber module is a pool to receive the request of subscribing and build the local twin for the peer-node.
 
-5. The worker channel is a channel to execute the asynchronous task on the background.
+5. The worker pool have some channels to execute the asynchronous task on the background.
 
 6. The micro-service of the streaming-hub owns the above modules and build the peer-mesh network by discovering the service name.
  Maybe have publisher service, subscribe service and twin-tunnel service.
