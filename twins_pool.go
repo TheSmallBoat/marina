@@ -11,7 +11,7 @@ type twinsPool struct {
 	sp sync.Pool
 }
 
-func newTwins() *twinsPool {
+func newTwinsPool() *twinsPool {
 	return &twinsPool{m: make(map[string]*twin), sp: sync.Pool{}}
 }
 
@@ -29,12 +29,13 @@ func (tp *twinsPool) acquire(peerNodeId *kademlia.ID) *twin {
 	v := tp.sp.Get()
 	if v == nil {
 		v = newTwin(peerNodeId)
+	} else {
+		v.(*twin).initWithOnline(peerNodeId)
 	}
-	tt := v.(*twin)
 
-	tt.turnToOnline()
-	tp.m[t.kadId.Pub.String()] = tt
-	return tt
+	t = v.(*twin)
+	tp.m[t.kadId.Pub.String()] = t
+	return t
 }
 
 func (tp *twinsPool) release(t *twin) {

@@ -24,7 +24,7 @@ func newTwin(peerNodeId *kademlia.ID) *twin {
 	return &twin{
 		kadId:   peerNodeId,
 		tc:      make(chan []byte, defaultTwinChannelSize),
-		online:  false,
+		online:  true,
 		counter: uint32(0),
 		offNum:  uint32(0),
 		mu:      sync.RWMutex{},
@@ -66,8 +66,15 @@ func (t *twin) setOnlineStatus(status bool) {
 }
 
 func (t *twin) reset() {
+	close(t.tc)
 	t.kadId = nil
 	t.online = false
 	t.counter = 0
 	t.offNum = 0
+}
+
+func (t *twin) initWithOnline(peerNodeId *kademlia.ID) {
+	t.tc = make(chan []byte, defaultTwinChannelSize)
+	t.kadId = peerNodeId
+	t.online = true
 }
