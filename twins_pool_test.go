@@ -58,6 +58,21 @@ func TestTwinsPool(t *testing.T) {
 	require.Equal(t, uint32(1), tw1.counter)
 	require.Equal(t, uint32(1), tw1.offNum)
 
+	tw1.turnToOnline()
+	require.Equal(t, true, tw1.online)
+	require.NoError(t, tw1.Push([]byte("hello,world..")))
+	require.Equal(t, uint32(2), tw1.counter)
+	require.Equal(t, uint32(1), tw1.offNum)
+
+	b = <-tw1.tc
+	require.Equal(t, []byte("hello,world.."), b)
+
+	tw1.setOnlineStatus(false)
+	require.Equal(t, false, tw1.online)
+	require.Error(t, tw1.Push([]byte("hello,world...")))
+	require.Equal(t, uint32(2), tw1.counter)
+	require.Equal(t, uint32(2), tw1.offNum)
+
 	tp.release(tw1)
 	require.Equal(t, int(0), tp.length())
 	require.Empty(t, tp.m)
@@ -79,22 +94,31 @@ func TestTwinsPool(t *testing.T) {
 	require.Equal(t, uint32(0), tw2.offNum)
 	require.Equal(t, true, tw2.online)
 
-	require.NoError(t, tw2.Push([]byte("hello,world..")))
+	require.NoError(t, tw2.Push([]byte("hello,world....")))
 	require.Equal(t, uint32(1), tw2.counter)
 	require.Equal(t, uint32(0), tw2.offNum)
 
 	b2 := <-tw2.tc
-	require.Equal(t, []byte("hello,world.."), b2)
+	require.Equal(t, []byte("hello,world...."), b2)
 
 	tw2.turnToOffline()
 	require.Equal(t, false, tw2.online)
-	require.Error(t, tw2.Push([]byte("hello,world...")))
+	require.Error(t, tw2.Push([]byte("hello,world......")))
 	require.Equal(t, uint32(1), tw2.counter)
 	require.Equal(t, uint32(1), tw2.offNum)
 
 	tp.release(tw2)
 	require.Equal(t, int(0), tp.length())
 	require.Empty(t, tp.m)
+
+	// section 3:
+	tw1 = tp.acquire(kid1)
+	require.Equal(t, int(1), tp.length())
+	tw2 = tp.acquire(kid2)
+	require.Equal(t, int(2), tp.length())
+	tw3 := tp.acquire(kid2)
+	require.Equal(t, int(2), tp.length())
+	require.Equal(t, tw2.kadId, tw3.kadId)
 }
 
 func BenchmarkTwinsPool(b *testing.B) {
