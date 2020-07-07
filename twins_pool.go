@@ -19,10 +19,18 @@ func (tp *twinsPool) length() int {
 	return len(tp.m)
 }
 
-func (tp *twinsPool) acquire(peerNodeId *kademlia.ID) *twin {
+func (tp *twinsPool) exist(peerNodeId *kademlia.ID) (*twin, bool) {
 	t, exist := tp.m[peerNodeId.Pub.String()]
 	if exist {
 		t.turnToOnline()
+		return t, exist
+	}
+	return nil, exist
+}
+
+func (tp *twinsPool) acquire(peerNodeId *kademlia.ID) *twin {
+	t, exist := tp.exist(peerNodeId)
+	if exist {
 		return t
 	}
 
