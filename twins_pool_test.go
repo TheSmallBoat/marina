@@ -101,25 +101,36 @@ func BenchmarkTwinsPool(b *testing.B) {
 	tp := newTwinsPool()
 	require.Empty(b, tp.m)
 
+	kid, err1 := generateKadId()
+	require.NoError(b, err1)
+	tw := tp.acquire(kid)
+
 	buf := make([]byte, 1400)
-	_, err := rand.Read(buf)
-	require.NoError(b, err)
+	_, err2 := rand.Read(buf)
+	require.NoError(b, err2)
 
 	b.SetBytes(int64(len(buf)))
 	b.ReportAllocs()
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		kid, err := generateKadId()
-		require.NoError(b, err)
-		tw := tp.acquire(kid)
-		require.NoError(b, tw.Push(buf))
+		err := tw.Push(buf)
+		if err != nil {
+			b.Fatal(err)
+		}
+		<-tw.tc
+	}
 
-		bf := <-tw.tc
-		require.Equal(b, buf, bf)
+	tp.release(tw)
+	require.Empty(b, tp.m)
 
-		tp.release(tw)
-		require.Empty(b, tp.m)
+	tw2 := tp.acquire(kid)
+	for i := 0; i < b.N; i++ {
+		err := tw2.Push(buf)
+		if err != nil {
+			b.Fatal(err)
+		}
+		<-tw2.tc
 	}
 
 }
