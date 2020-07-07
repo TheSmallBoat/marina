@@ -32,7 +32,11 @@ func newTwin(peerNodeId *kademlia.ID) *twin {
 }
 
 func (t *twin) Push(payLoad []byte) error {
-	if !t.online {
+	t.mu.RLock()
+	flag := t.online
+	t.mu.RUnlock()
+
+	if !flag {
 		//maybe need to cache the payload.
 
 		atomic.AddUint32(&t.offNum, uint32(1))
@@ -45,22 +49,22 @@ func (t *twin) Push(payLoad []byte) error {
 }
 
 func (t *twin) turnToOffline() {
-	t.mu.RLock()
-	defer t.mu.RUnlock()
+	t.mu.Lock()
+	defer t.mu.Unlock()
 
 	t.online = false
 }
 
 func (t *twin) turnToOnline() {
-	t.mu.RLock()
-	defer t.mu.RUnlock()
+	t.mu.Lock()
+	defer t.mu.Unlock()
 
 	t.online = true
 }
 
 func (t *twin) setOnlineStatus(status bool) {
-	t.mu.RLock()
-	defer t.mu.RUnlock()
+	t.mu.Lock()
+	defer t.mu.Unlock()
 
 	t.online = status
 }
