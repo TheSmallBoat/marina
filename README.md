@@ -1,5 +1,5 @@
 # marina
-A streaming-hub micro-service over the peer-mesh network.
+A streaming-hub micro-service over the peer-mesh network that implements streaming publish/subscribe mechanism base on topics.
 
 ## modules
 1. The twins-tunnel module is a tunnel that pair by the peer-nodes, the local twin is the mirror of the remote twin,
