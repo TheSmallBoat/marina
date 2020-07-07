@@ -7,28 +7,28 @@ import (
 )
 
 type twinsPool struct {
-	m  map[string]*twin
-	sp sync.Pool
-
 	mu sync.RWMutex
+
+	sp sync.Pool
+	mp map[string]*twin
 }
 
 func newTwinsPool() *twinsPool {
-	return &twinsPool{m: make(map[string]*twin), sp: sync.Pool{}}
+	return &twinsPool{mp: make(map[string]*twin), sp: sync.Pool{}}
 }
 
 func (tp *twinsPool) length() int {
 	tp.mu.RLock()
 	defer tp.mu.RUnlock()
 
-	return len(tp.m)
+	return len(tp.mp)
 }
 
 func (tp *twinsPool) exist(peerNodeId *kademlia.ID) (*twin, bool) {
 	tp.mu.RLock()
 	defer tp.mu.RUnlock()
 
-	t, exist := tp.m[peerNodeId.Pub.String()]
+	t, exist := tp.mp[peerNodeId.Pub.String()]
 	return t, exist
 }
 
@@ -52,7 +52,7 @@ func (tp *twinsPool) acquire(peerNodeId *kademlia.ID) *twin {
 	t = v.(*twin)
 
 	tp.mu.Lock()
-	tp.m[t.kadId.Pub.String()] = t
+	tp.mp[t.kadId.Pub.String()] = t
 	tp.mu.Unlock()
 
 	return t
@@ -60,12 +60,12 @@ func (tp *twinsPool) acquire(peerNodeId *kademlia.ID) *twin {
 
 func (tp *twinsPool) release(t *twin) {
 	tp.mu.RLock()
-	_, exist := tp.m[t.kadId.Pub.String()]
+	_, exist := tp.mp[t.kadId.Pub.String()]
 	tp.mu.RUnlock()
 
 	if exist {
 		tp.mu.Lock()
-		delete(tp.m, t.kadId.Pub.String())
+		delete(tp.mp, t.kadId.Pub.String())
 		tp.mu.Unlock()
 	}
 

@@ -14,10 +14,10 @@ type twin struct {
 	kadId *kademlia.ID // the peer node ID
 	tc    chan []byte
 
+	mu      sync.RWMutex
 	online  bool   // the flag about the activity of the peer-node twin, if true means that can work, otherwise cannot.
 	counter uint32 // the counter for the push operation while online.
 	offNum  uint32 // the counter for the push operation while offline.
-	mu      sync.RWMutex
 }
 
 func newTwin(peerNodeId *kademlia.ID) *twin {
