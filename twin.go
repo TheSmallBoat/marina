@@ -36,6 +36,9 @@ func (t *twin) Push(payLoad []byte) error {
 	flag := t.online
 	t.mu.RUnlock()
 
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
 	if !flag {
 		//maybe need to cache the payload.
 
@@ -45,6 +48,7 @@ func (t *twin) Push(payLoad []byte) error {
 
 	atomic.AddUint32(&t.counter, uint32(1))
 	t.tc <- payLoad
+
 	return nil
 }
 
@@ -70,6 +74,9 @@ func (t *twin) setOnlineStatus(status bool) {
 }
 
 func (t *twin) reset() {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
 	close(t.tc)
 	t.kadId = nil
 	t.online = false
@@ -78,6 +85,9 @@ func (t *twin) reset() {
 }
 
 func (t *twin) initWithOnline(peerNodeId *kademlia.ID) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
 	t.tc = make(chan []byte, defaultTwinChannelSize)
 	t.kadId = peerNodeId
 	t.online = true
