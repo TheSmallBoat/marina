@@ -7,10 +7,10 @@ import (
 	"github.com/lithdew/kademlia"
 )
 
-const defaultPublisherMaxWorkers = 32
+const defaultMaxPublishWorkers = 32
 
 // The publish message-packets come from the producers.
-type publisher struct {
+type publishWorker struct {
 	kadId *kademlia.ID //the broker-peer-node kadID
 
 	wp *workerPool
@@ -23,10 +23,10 @@ type publisher struct {
 	entNilNum uint32 // the error number of the nil subscribe entity
 }
 
-func NewPublisher(bKadId *kademlia.ID, tTree *cabinet.TTree) *publisher {
-	return &publisher{
+func NewPublisher(bKadId *kademlia.ID, tTree *cabinet.TTree) *publishWorker {
+	return &publishWorker{
 		kadId:     bKadId,
-		wp:        NewWorkerPool(defaultPublisherMaxWorkers),
+		wp:        NewWorkerPool(defaultMaxPublishWorkers),
 		tt:        tTree,
 		pubSucNum: 0,
 		pubErrNum: 0,
@@ -36,16 +36,16 @@ func NewPublisher(bKadId *kademlia.ID, tTree *cabinet.TTree) *publisher {
 }
 
 // skid : the source-peer-node KadID
-func (p *publisher) Publish(pkt *messagePacket) {
+func (p *publishWorker) Done(pkt *messagePacket) {
 	if pkt.qos == byte(1) {
 		// Todo:process response
 	}
 
-	p.wp.SubmitTask(func() { processPublishMessagePacket(p, pkt) })
+	p.wp.SubmitTask(func() { processMessagePacket(p, pkt) })
 }
 
 // To find the matched topic, and put the StreamPacket to the twin-pool
-func processPublishMessagePacket(p *publisher, pkt *messagePacket) {
+func processMessagePacket(p *publishWorker, pkt *messagePacket) {
 	pkt.setBrokerKadId(p.kadId)
 
 	entities := make([]interface{}, 0)
@@ -73,6 +73,6 @@ func processPublishMessagePacket(p *publisher, pkt *messagePacket) {
 	}
 }
 
-func (p *publisher) Close() {
+func (p *publishWorker) Close() {
 	p.wp.Close()
 }
