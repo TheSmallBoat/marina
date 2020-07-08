@@ -25,7 +25,7 @@ func TestPublishWorker(t *testing.T) {
 	require.NoError(t, err3)
 
 	twp := newTwinsPool()
-	require.Equal(t, int(0), twp.length())
+	require.Equal(t, 0, twp.length())
 	require.Empty(t, twp.mp)
 
 	tw := twp.acquire(sKid)

@@ -30,7 +30,7 @@ func TestTwinsPool(t *testing.T) {
 	defer goleak.VerifyNone(t)
 
 	tp := newTwinsPool()
-	require.Equal(t, int(0), tp.length())
+	require.Equal(t, 0, tp.length())
 	require.Empty(t, tp.mp)
 
 	// section 1:
@@ -39,8 +39,8 @@ func TestTwinsPool(t *testing.T) {
 	tw1 := tp.acquire(kid1)
 	require.Equal(t, true, kid1.Pub.String() == tw1.kadId.Pub.String())
 
-	require.Equal(t, int(1), tp.length())
-	require.Equal(t, int(1), len(tp.mp))
+	require.Equal(t, 1, tp.length())
+	require.Equal(t, 1, len(tp.mp))
 	require.Equal(t, tw1, tp.mp[kid1.Pub.String()])
 	require.Equal(t, uint32(0), tw1.counter)
 	require.Equal(t, uint32(0), tw1.offNum)
@@ -76,7 +76,7 @@ func TestTwinsPool(t *testing.T) {
 	require.Equal(t, uint32(2), tw1.offNum)
 
 	tp.release(tw1)
-	require.Equal(t, int(0), tp.length())
+	require.Equal(t, 0, tp.length())
 	require.Empty(t, tp.mp)
 
 	// section 2:
@@ -89,8 +89,8 @@ func TestTwinsPool(t *testing.T) {
 	require.Equal(t, tw1, tw2)
 	require.Equal(t, true, kid2.Pub.String() == tw2.kadId.Pub.String())
 
-	require.Equal(t, int(1), tp.length())
-	require.Equal(t, int(1), len(tp.mp))
+	require.Equal(t, 1, tp.length())
+	require.Equal(t, 1, len(tp.mp))
 	require.Equal(t, tw2, tp.mp[kid2.Pub.String()])
 	require.Equal(t, uint32(0), tw2.counter)
 	require.Equal(t, uint32(0), tw2.offNum)
@@ -111,16 +111,16 @@ func TestTwinsPool(t *testing.T) {
 	require.Equal(t, uint32(1), tw2.offNum)
 
 	tp.release(tw2)
-	require.Equal(t, int(0), tp.length())
+	require.Equal(t, 0, tp.length())
 	require.Empty(t, tp.mp)
 
 	// section 3:
 	tw1 = tp.acquire(kid1)
-	require.Equal(t, int(1), tp.length())
+	require.Equal(t, 1, tp.length())
 	tw2 = tp.acquire(kid2)
-	require.Equal(t, int(2), tp.length())
+	require.Equal(t, 2, tp.length())
 	tw3 := tp.acquire(kid2)
-	require.Equal(t, int(2), tp.length())
+	require.Equal(t, 2, tp.length())
 	require.Equal(t, tw2.kadId, tw3.kadId)
 }
 

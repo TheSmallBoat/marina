@@ -18,7 +18,7 @@ func TestSubscribeWorker(t *testing.T) {
 	}()
 
 	twp := newTwinsPool()
-	require.Equal(t, int(0), twp.length())
+	require.Equal(t, 0, twp.length())
 	require.Empty(t, twp.mp)
 
 	sw := NewSubscribeWorker(twp, tt)
