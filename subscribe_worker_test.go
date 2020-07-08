@@ -27,6 +27,9 @@ func TestSubscribeWorker(t *testing.T) {
 	kid3, err3 := generateKadId()
 	require.NoError(t, err3)
 
+	kid4, err4 := generateKadId()
+	require.NoError(t, err4)
+
 	sw.peerNodeSubscribe(kid1, byte(0), []byte("/finance/tom"))
 	sw.peerNodeSubscribe(kid2, byte(0), []byte("/finance/jack"))
 	sw.peerNodeSubscribe(kid3, byte(1), []byte("/finance/#"))
@@ -80,6 +83,11 @@ func TestSubscribeWorker(t *testing.T) {
 	twe = entities[0].(*twin)
 	require.Equal(t, twp.acquire(kid1), twe)
 
+	sw.peerNodeUnSubscribe(kid1, byte(1), []byte("/finance/tom/jack"))
+	sw.peerNodeUnSubscribe(kid4, byte(0), []byte("/finance/tom/jack"))
+	sw.Wait()
+	require.Equal(t, uint32(2), sw.unSubErrNum)
+
 	sw.peerNodeUnSubscribe(kid1, byte(1), []byte("/finance/tom"))
 	sw.Wait()
 	require.Equal(t, uint32(2), sw.unSubSucNum)
@@ -125,5 +133,5 @@ func TestSubscribeWorker(t *testing.T) {
 	sw.peerNodeUnSubscribe(kid3, byte(0), []byte("/finance/+/jack"))
 	sw.Wait()
 	require.Equal(t, uint32(3), sw.unSubSucNum)
-	require.Equal(t, uint32(2), sw.unSubErrNum)
+	require.Equal(t, uint32(4), sw.unSubErrNum)
 }
