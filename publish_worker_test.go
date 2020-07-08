@@ -57,6 +57,19 @@ func TestPublishWorker(t *testing.T) {
 	require.Equal(t, true, ok)
 	require.Equal(t, pkt.AppendTo(dst), pktByte)
 
+	pkt_, err5 := UnmarshalMessagePacket(pktByte)
+	require.NoError(t, err5)
+	// the pointer is not equal
+	require.Equal(t, pkt.mid, pkt_.mid)
+	require.Equal(t, pkt.qos, pkt_.qos)
+	require.Equal(t, pkt.topic, pkt_.topic)
+	require.Equal(t, pkt.payLoad, pkt_.payLoad)
+
+	dst = make([]byte, 0)
+	require.Equal(t, pkt.pubKadId.AppendTo(dst), pkt_.pubKadId.AppendTo(dst))
+	require.Equal(t, pkt.brkKadId.AppendTo(dst), pkt_.brkKadId.AppendTo(dst))
+	require.Equal(t, pkt.subKadId.AppendTo(dst), pkt_.subKadId.AppendTo(dst))
+
 	pkt = NewMessagePacket(pKid, uint32(89), byte(0), []byte("/finance/jack"), []byte("xyz123456abc"))
 	pw.PublishToBroker(pkt)
 	pw.Wait()
@@ -87,8 +100,8 @@ func TestPublishWorker(t *testing.T) {
 	require.Equal(t, pkt.AppendTo(dst), pktByte)
 
 	entities := make([]interface{}, 0)
-	err5 := tt.LinkedEntities([]byte("/finance/tom"), &entities)
-	require.NoError(t, err5)
+	err6 := tt.LinkedEntities([]byte("/finance/tom"), &entities)
+	require.NoError(t, err6)
 	require.Equal(t, 1, len(entities))
 	twe := entities[0].(*twin)
 	require.Equal(t, tw, twe)
@@ -109,8 +122,8 @@ func TestPublishWorker(t *testing.T) {
 	require.Equal(t, uint32(1), pw.pubErrNum)
 	require.Equal(t, uint32(1), pw.fwdErrNum)
 
-	err6 := tt.EntityUnLink([]byte("/finance/tom"), twp.acquire(sKid))
-	require.NoError(t, err6)
+	err7 := tt.EntityUnLink([]byte("/finance/tom"), twp.acquire(sKid))
+	require.NoError(t, err7)
 
 	pkt = NewMessagePacket(pKid, uint32(92), byte(1), []byte("/finance/tom"), []byte("123456abc"))
 	pw.PublishToBroker(pkt)

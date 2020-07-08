@@ -1,6 +1,7 @@
 package marina
 
 import (
+	"io"
 	"sync"
 
 	"github.com/lithdew/bytesutil"
@@ -62,6 +63,49 @@ func (mp *MessagePacket) AppendTo(dst []byte) []byte {
 	return dst
 }
 
-func (mp *MessagePacket) UnmarshalMessagePacket(buf []byte) (*MessagePacket, error) {
-	return nil, nil
+func UnmarshalMessagePacket(buf []byte) (*MessagePacket, error) {
+	var err error
+	var size uint16
+	var mid uint32
+	var qos byte
+	var topic, payLoad []byte
+	var pubKadId, brkKadId, subKadId kademlia.ID
+
+	if len(buf) < 5 {
+		return nil, io.ErrUnexpectedEOF
+	}
+	mid, buf = bytesutil.Uint32BE(buf[:4]), buf[4:]
+	qos, buf = buf[0], buf[1:]
+
+	if len(buf) < 2 {
+		return nil, io.ErrUnexpectedEOF
+	}
+	size, buf = bytesutil.Uint16BE(buf[:2]), buf[2:]
+	topic, buf = buf[:size], buf[size:]
+
+	if len(buf) < 2 {
+		return nil, io.ErrUnexpectedEOF
+	}
+	size, buf = bytesutil.Uint16BE(buf[:2]), buf[2:]
+	payLoad, buf = buf[:size], buf[size:]
+
+	pubKadId, buf, err = kademlia.UnmarshalID(buf)
+	if err != nil {
+		return nil, err
+	}
+
+	brkKadId, buf, err = kademlia.UnmarshalID(buf)
+	if err != nil {
+		return nil, err
+	}
+
+	subKadId, buf, err = kademlia.UnmarshalID(buf)
+	if err != nil {
+		return nil, err
+	}
+
+	pkt := NewMessagePacket(&pubKadId, mid, qos, topic, payLoad)
+	pkt.SetBrokerKadId(&brkKadId)
+	pkt.SetSubscriberKadId(&subKadId)
+	return pkt, nil
 }
