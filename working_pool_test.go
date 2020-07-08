@@ -25,6 +25,9 @@ func myFunc() {
 func TestWorkerPool(t *testing.T) {
 	defer goleak.VerifyNone(t)
 
+	var wc0 = NewWorkingPool(0)
+	defer wc0.Close()
+
 	var wc = NewWorkingPool(8)
 	defer wc.Close()
 
