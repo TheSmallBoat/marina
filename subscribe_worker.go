@@ -12,7 +12,7 @@ const defaultMaxSubscribeWorkers = 4
 // The subscribe packets come from the peer-nodes.
 type subscribeWorker struct {
 	tp *twinsPool
-	wp *workerPool
+	wp *workingPool
 	tt *cabinet.TTree
 
 	subSucNum   uint32 // the success number of the subscribing operation
@@ -23,7 +23,7 @@ type subscribeWorker struct {
 
 func NewSubscribeWorker(twp *twinsPool) *subscribeWorker {
 	return &subscribeWorker{
-		wp:          NewWorkerPool(defaultMaxSubscribeWorkers),
+		wp:          NewWorkingPool(defaultMaxSubscribeWorkers),
 		tp:          twp,
 		tt:          cabinet.NewTopicTree(),
 		subSucNum:   0,

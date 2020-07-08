@@ -26,7 +26,7 @@ func myFunc() {
 func TestWorkerPool(t *testing.T) {
 	defer goleak.VerifyNone(t)
 
-	var wc = NewWorkerPool(8)
+	var wc = NewWorkingPool(8)
 	defer wc.Close()
 
 	assert.Equal(t, wc.maxWorkers, uint16(8))
@@ -44,7 +44,7 @@ func BenchmarkWorkerPool(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 
-	var wc = NewWorkerPool(8)
+	var wc = NewWorkingPool(8)
 	defer wc.Close()
 
 	assert.Equal(b, wc.maxWorkers, uint16(8))

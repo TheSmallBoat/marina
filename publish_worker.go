@@ -13,7 +13,7 @@ const defaultMaxPublishWorkers = 32
 type publishWorker struct {
 	kadId *kademlia.ID //the broker-peer-node kadID
 
-	wp *workerPool
+	wp *workingPool
 	tt *cabinet.TTree
 
 	pubSucNum uint32 // the success number of the publishing operation
@@ -23,10 +23,10 @@ type publishWorker struct {
 	entNilNum uint32 // the error number of the nil subscribe entity
 }
 
-func NewPublisher(bKadId *kademlia.ID, tTree *cabinet.TTree) *publishWorker {
+func NewPublishWorker(bKadId *kademlia.ID, tTree *cabinet.TTree) *publishWorker {
 	return &publishWorker{
 		kadId:     bKadId,
-		wp:        NewWorkerPool(defaultMaxPublishWorkers),
+		wp:        NewWorkingPool(defaultMaxPublishWorkers),
 		tt:        tTree,
 		pubSucNum: 0,
 		pubErrNum: 0,
