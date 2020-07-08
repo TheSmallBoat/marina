@@ -3,6 +3,7 @@ package marina
 import (
 	"testing"
 
+	"github.com/TheSmallBoat/cabinet"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/goleak"
 )
@@ -10,11 +11,13 @@ import (
 func TestSubscribeWorker(t *testing.T) {
 	defer goleak.VerifyNone(t)
 
+	tt := cabinet.NewTopicTree()
+
 	twp := newTwinsPool()
 	require.Equal(t, int(0), twp.length())
 	require.Empty(t, twp.mp)
 
-	sw := NewSubscribeWorker(twp)
+	sw := NewSubscribeWorker(twp, tt)
 	defer sw.Close()
 
 	kid1, err1 := generateKadId()

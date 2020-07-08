@@ -12,8 +12,8 @@ const defaultMaxSubscribeWorkers = 4
 
 // The subscribe packets come from the peer-nodes.
 type subscribeWorker struct {
-	tp *twinsPool
 	wp *workingPool
+	tp *twinsPool
 	tt *cabinet.TTree
 
 	subSucNum   uint32 // the success number of the subscribing operation
@@ -24,11 +24,11 @@ type subscribeWorker struct {
 	wg sync.WaitGroup
 }
 
-func NewSubscribeWorker(twp *twinsPool) *subscribeWorker {
+func NewSubscribeWorker(twp *twinsPool, tTree *cabinet.TTree) *subscribeWorker {
 	return &subscribeWorker{
 		wp:          NewWorkingPool(defaultMaxSubscribeWorkers),
 		tp:          twp,
-		tt:          cabinet.NewTopicTree(),
+		tt:          tTree,
 		subSucNum:   0,
 		subErrNum:   0,
 		unSubSucNum: 0,
@@ -83,7 +83,6 @@ func processPeerNodeUnSubscribe(subW *subscribeWorker, kid *kademlia.ID, topic [
 
 func (s *subscribeWorker) Close() {
 	s.wp.Close()
-	_ = s.tt.Close()
 }
 
 func (s *subscribeWorker) Wait() {
