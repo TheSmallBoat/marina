@@ -1,6 +1,7 @@
 package marina
 
 import (
+	"sync"
 	"sync/atomic"
 
 	"github.com/TheSmallBoat/cabinet"
@@ -19,6 +20,8 @@ type subscribeWorker struct {
 	subErrNum   uint32 // the error number of the subscribing operation
 	unSubSucNum uint32 // the success number of the unsubscribing operation
 	unSubErrNum uint32 // the error number of the unsubscribing operation
+
+	wg sync.WaitGroup
 }
 
 func NewSubscribeWorker(twp *twinsPool) *subscribeWorker {
@@ -38,7 +41,7 @@ func (s *subscribeWorker) peerNodeSubscribe(kid *kademlia.ID, qos byte, topic []
 	if qos == byte(1) {
 		// Todo:process response
 	}
-
+	s.wg.Add(1)
 	s.wp.SubmitTask(func() { processPeerNodeSubscribe(s, kid, topic) })
 }
 
@@ -47,6 +50,7 @@ func (s *subscribeWorker) peerNodeUnSubscribe(kid *kademlia.ID, qos byte, topic 
 		// Todo:process response
 	}
 
+	s.wg.Add(1)
 	s.wp.SubmitTask(func() { processPeerNodeUnSubscribe(s, kid, topic) })
 }
 
@@ -58,24 +62,30 @@ func processPeerNodeSubscribe(subW *subscribeWorker, kid *kademlia.ID, topic []b
 	} else {
 		atomic.AddUint32(&subW.subSucNum, uint32(1))
 	}
+	subW.wg.Done()
 }
 
 // To unlink the twin for the peer-node to this topic
-func processPeerNodeUnSubscribe(sub *subscribeWorker, kid *kademlia.ID, topic []byte) {
-	tw, exist := sub.tp.exist(kid)
+func processPeerNodeUnSubscribe(subW *subscribeWorker, kid *kademlia.ID, topic []byte) {
+	tw, exist := subW.tp.exist(kid)
 	if exist {
-		err := sub.tt.EntityUnLink(topic, tw)
+		err := subW.tt.EntityUnLink(topic, tw)
 		if err != nil {
-			atomic.AddUint32(&sub.unSubErrNum, uint32(1))
+			atomic.AddUint32(&subW.unSubErrNum, uint32(1))
 		} else {
-			atomic.AddUint32(&sub.unSubSucNum, uint32(1))
+			atomic.AddUint32(&subW.unSubSucNum, uint32(1))
 		}
 	} else {
-		atomic.AddUint32(&sub.unSubErrNum, uint32(1))
+		atomic.AddUint32(&subW.unSubErrNum, uint32(1))
 	}
+	subW.wg.Done()
 }
 
 func (s *subscribeWorker) Close() {
 	s.wp.Close()
 	_ = s.tt.Close()
+}
+
+func (s *subscribeWorker) Wait() {
+	s.wg.Wait()
 }
