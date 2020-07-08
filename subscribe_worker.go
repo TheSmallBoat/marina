@@ -56,17 +56,20 @@ func (s *subscribeWorker) peerNodeUnSubscribe(kid *kademlia.ID, qos byte, topic 
 
 // To link the twin for the peer-node to this topic
 func processPeerNodeSubscribe(subW *subscribeWorker, kid *kademlia.ID, topic []byte) {
+	defer subW.wg.Done()
+
 	err := subW.tt.EntityLink(topic, subW.tp.acquire(kid))
 	if err != nil {
 		atomic.AddUint32(&subW.subErrNum, uint32(1))
 	} else {
 		atomic.AddUint32(&subW.subSucNum, uint32(1))
 	}
-	subW.wg.Done()
 }
 
 // To unlink the twin for the peer-node to this topic
 func processPeerNodeUnSubscribe(subW *subscribeWorker, kid *kademlia.ID, topic []byte) {
+	defer subW.wg.Done()
+
 	tw, exist := subW.tp.exist(kid)
 	if exist {
 		err := subW.tt.EntityUnLink(topic, tw)
@@ -78,7 +81,6 @@ func processPeerNodeUnSubscribe(subW *subscribeWorker, kid *kademlia.ID, topic [
 	} else {
 		atomic.AddUint32(&subW.unSubErrNum, uint32(1))
 	}
-	subW.wg.Done()
 }
 
 func (s *subscribeWorker) Close() {

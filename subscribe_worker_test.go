@@ -12,6 +12,10 @@ func TestSubscribeWorker(t *testing.T) {
 	defer goleak.VerifyNone(t)
 
 	tt := cabinet.NewTopicTree()
+	defer func() {
+		err := tt.Close()
+		require.NoError(t, err)
+	}()
 
 	twp := newTwinsPool()
 	require.Equal(t, int(0), twp.length())
