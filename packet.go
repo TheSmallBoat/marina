@@ -7,7 +7,7 @@ import (
 	"github.com/lithdew/kademlia"
 )
 
-type messagePacket struct {
+type MessagePacket struct {
 	mu sync.Mutex
 
 	pubKadId *kademlia.ID // the publish-peer-node KadId
@@ -22,8 +22,8 @@ type messagePacket struct {
 
 // Todo: add messagePacketPool
 
-func newMessagePacket(pubKadId *kademlia.ID, mid uint32, qos byte, topic []byte, payLoad []byte) *messagePacket {
-	return &messagePacket{
+func NewMessagePacket(pubKadId *kademlia.ID, mid uint32, qos byte, topic []byte, payLoad []byte) *MessagePacket {
+	return &MessagePacket{
 		mu:       sync.Mutex{},
 		pubKadId: pubKadId,
 		brkKadId: nil,
@@ -35,21 +35,21 @@ func newMessagePacket(pubKadId *kademlia.ID, mid uint32, qos byte, topic []byte,
 	}
 }
 
-func (mp *messagePacket) setBrokerKadId(kadId *kademlia.ID) {
+func (mp *MessagePacket) SetBrokerKadId(kadId *kademlia.ID) {
 	mp.mu.Lock()
 	defer mp.mu.Unlock()
 
 	mp.brkKadId = kadId
 }
 
-func (mp *messagePacket) setSubscriberKadId(kadId *kademlia.ID) {
+func (mp *MessagePacket) SetSubscriberKadId(kadId *kademlia.ID) {
 	mp.mu.Lock()
 	defer mp.mu.Unlock()
 
 	mp.subKadId = kadId
 }
 
-func (mp *messagePacket) AppendTo(dst []byte) []byte {
+func (mp *MessagePacket) AppendTo(dst []byte) []byte {
 	dst = bytesutil.AppendUint32BE(dst, mp.mid)
 	dst = append(dst, mp.qos)
 	dst = bytesutil.AppendUint16BE(dst, uint16(len(mp.topic)))
@@ -60,4 +60,8 @@ func (mp *messagePacket) AppendTo(dst []byte) []byte {
 	dst = mp.brkKadId.AppendTo(dst)
 	dst = mp.subKadId.AppendTo(dst)
 	return dst
+}
+
+func (mp *MessagePacket) UnmarshalMessagePacket(buf []byte) (*MessagePacket, error) {
+	return nil, nil
 }

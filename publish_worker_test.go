@@ -37,7 +37,7 @@ func TestPublishWorker(t *testing.T) {
 	pw := NewPublishWorker(bKid, tt)
 	defer pw.Close()
 
-	pkt := newMessagePacket(pKid, uint32(88), byte(0), []byte("/finance/tom"), []byte("xyz123456abc"))
+	pkt := NewMessagePacket(pKid, uint32(88), byte(0), []byte("/finance/tom"), []byte("xyz123456abc"))
 	pw.PublishToBroker(pkt)
 	pw.Wait()
 
@@ -57,7 +57,7 @@ func TestPublishWorker(t *testing.T) {
 	require.Equal(t, true, ok)
 	require.Equal(t, pkt.AppendTo(dst), pktByte)
 
-	pkt = newMessagePacket(pKid, uint32(89), byte(0), []byte("/finance/jack"), []byte("xyz123456abc"))
+	pkt = NewMessagePacket(pKid, uint32(89), byte(0), []byte("/finance/jack"), []byte("xyz123456abc"))
 	pw.PublishToBroker(pkt)
 	pw.Wait()
 
@@ -66,7 +66,7 @@ func TestPublishWorker(t *testing.T) {
 	require.Equal(t, uint32(1), pw.pubErrNum)
 	require.Equal(t, uint32(0), pw.fwdErrNum)
 
-	pkt = newMessagePacket(pKid, uint32(90), byte(0), []byte("/finance/tom"), []byte("xyz123456abc.."))
+	pkt = NewMessagePacket(pKid, uint32(90), byte(0), []byte("/finance/tom"), []byte("xyz123456abc.."))
 	pw.PublishToBroker(pkt)
 	pw.Wait()
 
@@ -100,7 +100,7 @@ func TestPublishWorker(t *testing.T) {
 	require.Equal(t, false, twe.online)
 	require.Equal(t, false, tw.online)
 
-	pkt = newMessagePacket(pKid, uint32(91), byte(0), []byte("/finance/tom"), []byte("x123456abc..."))
+	pkt = NewMessagePacket(pKid, uint32(91), byte(0), []byte("/finance/tom"), []byte("x123456abc..."))
 	pw.PublishToBroker(pkt)
 	pw.Wait()
 
@@ -112,7 +112,7 @@ func TestPublishWorker(t *testing.T) {
 	err6 := tt.EntityUnLink([]byte("/finance/tom"), twp.acquire(sKid))
 	require.NoError(t, err6)
 
-	pkt = newMessagePacket(pKid, uint32(92), byte(1), []byte("/finance/tom"), []byte("123456abc"))
+	pkt = NewMessagePacket(pKid, uint32(92), byte(1), []byte("/finance/tom"), []byte("123456abc"))
 	pw.PublishToBroker(pkt)
 	pw.Wait()
 

@@ -36,7 +36,7 @@ func NewPublishWorker(bKadId *kademlia.ID, tTree *cabinet.TTree) *publishWorker 
 	}
 }
 
-func (p *publishWorker) PublishToBroker(pkt *messagePacket) {
+func (p *publishWorker) PublishToBroker(pkt *MessagePacket) {
 	if pkt.qos == byte(1) {
 		// Todo:process response
 	}
@@ -46,10 +46,10 @@ func (p *publishWorker) PublishToBroker(pkt *messagePacket) {
 }
 
 // To find the matched topic, and put the messagePacket to the twin
-func processMessagePacket(pubW *publishWorker, pkt *messagePacket) {
+func processMessagePacket(pubW *publishWorker, pkt *MessagePacket) {
 	defer pubW.wg.Done()
 
-	pkt.setBrokerKadId(pubW.kadId)
+	pkt.SetBrokerKadId(pubW.kadId)
 
 	entities := make([]interface{}, 0)
 	err := pubW.tt.LinkedEntities(pkt.topic, &entities)
@@ -61,7 +61,7 @@ func processMessagePacket(pubW *publishWorker, pkt *messagePacket) {
 	for _, v := range entities {
 		tw := v.(*twin)
 		if tw != nil {
-			pkt.setSubscriberKadId(tw.kadId)
+			pkt.SetSubscriberKadId(tw.kadId)
 
 			dst := make([]byte, 0)
 			err := tw.Push(pkt.AppendTo(dst))
