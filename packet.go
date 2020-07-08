@@ -20,6 +20,8 @@ type messagePacket struct {
 	payLoad []byte
 }
 
+// Todo: add messagePacketPool
+
 func newMessagePacket(pubKadId *kademlia.ID, mid uint32, qos byte, topic []byte, payLoad []byte) *messagePacket {
 	return &messagePacket{
 		mu:       sync.Mutex{},
