@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/goleak"
 )
@@ -29,7 +28,7 @@ func TestWorkerPool(t *testing.T) {
 	var wc = NewWorkingPool(8)
 	defer wc.Close()
 
-	assert.Equal(t, wc.maxWorkers, uint16(8))
+	require.Equal(t, wc.maxWorkers, uint16(8))
 
 	for i := 0; i < 1024; i++ {
 		wg.Add(1)
@@ -47,7 +46,7 @@ func BenchmarkWorkerPool(b *testing.B) {
 	var wc = NewWorkingPool(8)
 	defer wc.Close()
 
-	assert.Equal(b, wc.maxWorkers, uint16(8))
+	require.Equal(b, wc.maxWorkers, uint16(8))
 
 	for i := 0; i < b.N; i++ {
 		wg.Add(1)
