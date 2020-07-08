@@ -31,7 +31,7 @@ func newTwin(peerNodeId *kademlia.ID) *twin {
 	}
 }
 
-func (t *twin) Push(payLoad []byte) error {
+func (t *twin) Push(pkt []byte) error {
 	t.mu.RLock()
 	flag := t.online
 	t.mu.RUnlock()
@@ -40,14 +40,14 @@ func (t *twin) Push(payLoad []byte) error {
 	defer t.mu.Unlock()
 
 	if !flag {
-		//maybe need to cache the payload.
+		//maybe need to cache the pkt.
 
 		atomic.AddUint32(&t.offNum, uint32(1))
 		return fmt.Errorf("the '%s:%d' host's twin is not online", t.kadId.Host.String(), t.kadId.Port)
 	}
 
 	atomic.AddUint32(&t.counter, uint32(1))
-	t.tc <- payLoad
+	t.tc <- pkt
 
 	return nil
 }
