@@ -52,6 +52,11 @@ func (t *twin) Push(pkt []byte) error {
 	return nil
 }
 
+func (t *twin) Pull() ([]byte, bool) {
+	pkt, ok := <-t.tc
+	return pkt, ok
+}
+
 func (t *twin) turnToOffline() {
 	t.mu.Lock()
 	defer t.mu.Unlock()

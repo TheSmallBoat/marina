@@ -49,7 +49,8 @@ func TestTwinsPool(t *testing.T) {
 	require.Equal(t, uint32(1), tw1.counter)
 	require.Equal(t, uint32(0), tw1.offNum)
 
-	b := <-tw1.tc
+	b, ok := tw1.Pull()
+	require.Equal(t, true, ok)
 	require.Equal(t, []byte("hello,world"), b)
 
 	tw1.turnToOffline()
@@ -64,7 +65,8 @@ func TestTwinsPool(t *testing.T) {
 	require.Equal(t, uint32(2), tw1.counter)
 	require.Equal(t, uint32(1), tw1.offNum)
 
-	b = <-tw1.tc
+	b, ok = tw1.Pull()
+	require.Equal(t, true, ok)
 	require.Equal(t, []byte("hello,world.."), b)
 
 	tw1.setOnlineStatus(false)
@@ -98,7 +100,8 @@ func TestTwinsPool(t *testing.T) {
 	require.Equal(t, uint32(1), tw2.counter)
 	require.Equal(t, uint32(0), tw2.offNum)
 
-	b2 := <-tw2.tc
+	b2, ok2 := tw2.Pull()
+	require.Equal(t, true, ok2)
 	require.Equal(t, []byte("hello,world...."), b2)
 
 	tw2.turnToOffline()
@@ -142,7 +145,7 @@ func BenchmarkTwinsPool(b *testing.B) {
 		if err != nil {
 			b.Fatal(err)
 		}
-		<-tw.tc
+		tw.Pull()
 	}
 
 	tp.release(tw)
@@ -154,7 +157,7 @@ func BenchmarkTwinsPool(b *testing.B) {
 		if err != nil {
 			b.Fatal(err)
 		}
-		<-tw2.tc
+		tw2.Pull()
 	}
 
 }
