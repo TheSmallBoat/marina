@@ -1,17 +1,18 @@
 package marina
 
 import (
+	"sync/atomic"
+
 	"github.com/TheSmallBoat/cabinet"
 	"github.com/lithdew/kademlia"
-	"sync/atomic"
 )
 
-const defaultSubscriberMaxWorkers = 8
+const defaultSubscriberMaxWorkers = 4
 
 // The subscribe packets come from the peer-nodes.
 type subscriber struct {
-	wp *workerPool
 	tp *twinsPool
+	wp *workerPool
 	tt *cabinet.TTree
 
 	subSucNum   uint32 // the success number of the subscribing operation
@@ -20,17 +21,22 @@ type subscriber struct {
 	unSubErrNum uint32 // the error number of the unsubscribing operation
 }
 
-func NewSubscriber() *subscriber {
+func NewSubscriber(twp *twinsPool) *subscriber {
 	return &subscriber{
-		wp: NewWorkerPool(defaultSubscriberMaxWorkers),
-		tp: newTwinsPool(),
-		tt: cabinet.NewTopicTree(),
+		wp:          NewWorkerPool(defaultSubscriberMaxWorkers),
+		tp:          twp,
+		tt:          cabinet.NewTopicTree(),
+		subSucNum:   0,
+		subErrNum:   0,
+		unSubSucNum: 0,
+		unSubErrNum: 0,
 	}
 }
 
+// kid : the subscribe-peer-node kadId
 func (s *subscriber) peerNodeSubscribe(kid *kademlia.ID, qos byte, topic []byte) {
 	if qos == byte(1) {
-		// process response
+		// Todo:process response
 	}
 
 	s.wp.SubmitTask(func() { processPeerNodeSubscribe(s, kid, topic) })
@@ -38,7 +44,7 @@ func (s *subscriber) peerNodeSubscribe(kid *kademlia.ID, qos byte, topic []byte)
 
 func (s *subscriber) peerNodeUnSubscribe(kid *kademlia.ID, qos byte, topic []byte) {
 	if qos == byte(1) {
-		// process response
+		// Todo:process response
 	}
 
 	s.wp.SubmitTask(func() { processPeerNodeUnSubscribe(s, kid, topic) })
