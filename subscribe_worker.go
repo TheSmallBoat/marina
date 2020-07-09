@@ -12,9 +12,9 @@ const defaultMaxSubscribeWorkers = 4
 
 // The subscribe packets come from the peer-nodes.
 type subscribeWorker struct {
-	wp *workingPool
-	tp *twinsPool
-	tt *cabinet.TTree
+	tp  *taskPool
+	twp *twinsPool
+	tt  *cabinet.TTree
 
 	subSucNum   uint32 // the success number of the subscribing operation
 	subErrNum   uint32 // the error number of the subscribing operation
@@ -26,8 +26,8 @@ type subscribeWorker struct {
 
 func NewSubscribeWorker(twp *twinsPool, tTree *cabinet.TTree) *subscribeWorker {
 	return &subscribeWorker{
-		wp:          NewWorkingPool(defaultMaxSubscribeWorkers),
-		tp:          twp,
+		tp:          NewTaskPool(defaultMaxSubscribeWorkers),
+		twp:         twp,
 		tt:          tTree,
 		subSucNum:   0,
 		subErrNum:   0,
@@ -42,7 +42,7 @@ func (s *subscribeWorker) peerNodeSubscribe(kid *kademlia.ID, qos byte, topic []
 		// Todo:process response
 	}
 	s.wg.Add(1)
-	s.wp.SubmitTask(func() { processPeerNodeSubscribe(s, kid, topic) })
+	s.tp.SubmitTask(func() { processPeerNodeSubscribe(s, kid, topic) })
 }
 
 func (s *subscribeWorker) peerNodeUnSubscribe(kid *kademlia.ID, qos byte, topic []byte) {
@@ -51,14 +51,14 @@ func (s *subscribeWorker) peerNodeUnSubscribe(kid *kademlia.ID, qos byte, topic 
 	}
 
 	s.wg.Add(1)
-	s.wp.SubmitTask(func() { processPeerNodeUnSubscribe(s, kid, topic) })
+	s.tp.SubmitTask(func() { processPeerNodeUnSubscribe(s, kid, topic) })
 }
 
 // To link the twin for the peer-node to this topic
 func processPeerNodeSubscribe(subW *subscribeWorker, kid *kademlia.ID, topic []byte) {
 	defer subW.wg.Done()
 
-	err := subW.tt.EntityLink(topic, subW.tp.acquire(kid))
+	err := subW.tt.EntityLink(topic, subW.twp.acquire(kid))
 	if err != nil {
 		atomic.AddUint32(&subW.subErrNum, uint32(1))
 	} else {
@@ -70,7 +70,7 @@ func processPeerNodeSubscribe(subW *subscribeWorker, kid *kademlia.ID, topic []b
 func processPeerNodeUnSubscribe(subW *subscribeWorker, kid *kademlia.ID, topic []byte) {
 	defer subW.wg.Done()
 
-	tw, exist := subW.tp.exist(kid)
+	tw, exist := subW.twp.exist(kid)
 	if exist {
 		err := subW.tt.EntityUnLink(topic, tw)
 		if err != nil {
@@ -84,7 +84,7 @@ func processPeerNodeUnSubscribe(subW *subscribeWorker, kid *kademlia.ID, topic [
 }
 
 func (s *subscribeWorker) Close() {
-	s.wp.Close()
+	s.tp.Close()
 }
 
 func (s *subscribeWorker) Wait() {

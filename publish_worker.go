@@ -12,7 +12,7 @@ const defaultMaxPublishWorkers = 32
 
 // The publish message-packets come from the producers.
 type publishWorker struct {
-	wp    *workingPool
+	tp    *taskPool
 	tt    *cabinet.TTree
 	kadId *kademlia.ID //the broker-peer-node kadID
 
@@ -26,7 +26,7 @@ type publishWorker struct {
 
 func NewPublishWorker(bKadId *kademlia.ID, tTree *cabinet.TTree) *publishWorker {
 	return &publishWorker{
-		wp:        NewWorkingPool(defaultMaxPublishWorkers),
+		tp:        NewTaskPool(defaultMaxPublishWorkers),
 		kadId:     bKadId,
 		tt:        tTree,
 		pubSucNum: 0,
@@ -42,7 +42,7 @@ func (p *publishWorker) PublishToBroker(pkt *MessagePacket) {
 	}
 
 	p.wg.Add(1)
-	p.wp.SubmitTask(func() { processMessagePacket(p, pkt) })
+	p.tp.SubmitTask(func() { processMessagePacket(p, pkt) })
 }
 
 // To find the matched topic, and put the messagePacket to the twin
@@ -77,7 +77,7 @@ func processMessagePacket(pubW *publishWorker, pkt *MessagePacket) {
 }
 
 func (p *publishWorker) Close() {
-	p.wp.Close()
+	p.tp.Close()
 }
 
 func (p *publishWorker) Wait() {

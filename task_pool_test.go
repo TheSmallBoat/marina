@@ -22,38 +22,38 @@ func myFunc() {
 	wg.Done()
 }
 
-func TestWorkerPool(t *testing.T) {
+func TestTaskPool(t *testing.T) {
 	defer goleak.VerifyNone(t)
 
-	var wc0 = NewWorkingPool(0)
-	defer wc0.Close()
+	var tp0 = NewTaskPool(0)
+	defer tp0.Close()
 
-	var wc = NewWorkingPool(8)
-	defer wc.Close()
+	var tp = NewTaskPool(8)
+	defer tp.Close()
 
-	require.Equal(t, wc.maxWorkers, uint16(8))
+	require.Equal(t, tp.maxWorkers, uint16(8))
 
 	for i := 0; i < 1024; i++ {
 		wg.Add(1)
 		time.Sleep(1 * time.Nanosecond)
-		wc.SubmitTask(myFunc)
+		tp.SubmitTask(myFunc)
 	}
 	wg.Wait()
-	require.Equal(t, wc.taskCounter*uint32(step), uint32(sum))
+	require.Equal(t, tp.taskCounter*uint32(step), uint32(sum))
 }
 
-func BenchmarkWorkerPool(b *testing.B) {
+func BenchmarkTaskPool(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 
-	var wc = NewWorkingPool(8)
-	defer wc.Close()
+	var tp = NewTaskPool(8)
+	defer tp.Close()
 
-	require.Equal(b, wc.maxWorkers, uint16(8))
+	require.Equal(b, tp.maxWorkers, uint16(8))
 
 	for i := 0; i < b.N; i++ {
 		wg.Add(1)
-		wc.SubmitTask(myFunc)
+		tp.SubmitTask(myFunc)
 	}
 	wg.Wait()
 }
