@@ -18,6 +18,8 @@ func TestPacket(t *testing.T) {
 	require.NoError(t, err3)
 
 	pkt := NewMessagePacket(pKid, uint32(88), byte(0), []byte("/finance/tom"), []byte("xyz123456abc"))
+	defer pkt.Release()
+
 	require.Equal(t, pKid, pkt.pubKadId)
 
 	pkt.SetBrokerKadId(bKid)

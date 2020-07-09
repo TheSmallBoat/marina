@@ -21,19 +21,8 @@ type MessagePacket struct {
 	payLoad []byte
 }
 
-// Todo: add messagePacketPool
-
 func NewMessagePacket(pubKadId *kademlia.ID, mid uint32, qos byte, topic []byte, payLoad []byte) *MessagePacket {
-	return &MessagePacket{
-		mu:       sync.Mutex{},
-		pubKadId: pubKadId,
-		brkKadId: nil,
-		subKadId: nil,
-		mid:      mid,
-		qos:      qos,
-		topic:    topic,
-		payLoad:  payLoad,
-	}
+	return theMessagePacketPool.acquire(pubKadId, mid, qos, topic, payLoad)
 }
 
 func (mp *MessagePacket) SetBrokerKadId(kadId *kademlia.ID) {
@@ -114,4 +103,8 @@ func UnmarshalMessagePacket(buf []byte) (*MessagePacket, error) {
 	pkt.SetBrokerKadId(&brkKadId)
 	pkt.SetSubscriberKadId(&subKadId)
 	return pkt, nil
+}
+
+func (mp *MessagePacket) Release() {
+	theMessagePacketPool.release(mp)
 }
