@@ -81,12 +81,18 @@ func UnmarshalMessagePacket(buf []byte) (*MessagePacket, error) {
 		return nil, io.ErrUnexpectedEOF
 	}
 	size, buf = bytesutil.Uint16BE(buf[:2]), buf[2:]
+	if uint16(len(buf)) < size {
+		return nil, io.ErrUnexpectedEOF
+	}
 	topic, buf = buf[:size], buf[size:]
 
 	if len(buf) < 2 {
 		return nil, io.ErrUnexpectedEOF
 	}
 	size, buf = bytesutil.Uint16BE(buf[:2]), buf[2:]
+	if uint16(len(buf)) < size {
+		return nil, io.ErrUnexpectedEOF
+	}
 	payLoad, buf = buf[:size], buf[size:]
 
 	pubKadId, buf, err = kademlia.UnmarshalID(buf)
