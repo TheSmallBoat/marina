@@ -3,6 +3,7 @@ package marina
 import (
 	"testing"
 
+	"github.com/lithdew/kademlia"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/goleak"
 )
@@ -18,7 +19,6 @@ func TestPacket(t *testing.T) {
 	require.NoError(t, err3)
 
 	pkt := NewMessagePacket(pKid, uint32(88), byte(0), []byte("/finance/tom"), []byte("xyz123456abc"))
-	defer pkt.Release()
 
 	require.Equal(t, pKid, pkt.pubKadId)
 
@@ -26,6 +26,11 @@ func TestPacket(t *testing.T) {
 	require.Equal(t, bKid, pkt.brkKadId)
 	pkt.SetSubscriberKadId(sKid)
 	require.Equal(t, sKid, pkt.subKadId)
+
+	require.Equal(t, uint32(88), pkt.mid)
+	require.Equal(t, byte(0), pkt.qos)
+	require.Equal(t, []byte("/finance/tom"), pkt.topic)
+	require.Equal(t, []byte("xyz123456abc"), pkt.payLoad)
 
 	dst := make([]byte, 0)
 	pktByte := pkt.AppendTo(dst)
@@ -69,4 +74,30 @@ func TestPacket(t *testing.T) {
 	require.Error(t, err)
 	_, err = UnmarshalMessagePacket(pktByte[:128])
 	require.Error(t, err)
+
+	// test the packet_pool after release and renew one
+	pkt.Release()
+	require.Equal(t, (*kademlia.ID)(nil), pkt.pubKadId)
+	require.Equal(t, (*kademlia.ID)(nil), pkt.brkKadId)
+	require.Equal(t, (*kademlia.ID)(nil), pkt.subKadId)
+	require.Equal(t, zeroMid, pkt.mid)
+	require.Equal(t, zeroQos, pkt.qos)
+	require.Equal(t, []byte(nil), pkt.topic)
+	require.Equal(t, []byte(nil), pkt.payLoad)
+
+	pkt = NewMessagePacket(pKid, uint32(888), byte(1), []byte("/finance/tom/#"), []byte("....xyz123456abc...."))
+	defer pkt.Release()
+
+	require.Equal(t, pKid, pkt.pubKadId)
+
+	pkt.SetBrokerKadId(bKid)
+	require.Equal(t, bKid, pkt.brkKadId)
+	pkt.SetSubscriberKadId(sKid)
+	require.Equal(t, sKid, pkt.subKadId)
+
+	require.Equal(t, uint32(888), pkt.mid)
+	require.Equal(t, byte(1), pkt.qos)
+	require.Equal(t, []byte("/finance/tom/#"), pkt.topic)
+	require.Equal(t, []byte("....xyz123456abc...."), pkt.payLoad)
+
 }
