@@ -40,6 +40,9 @@ func (mp *MessagePacket) SetSubscriberKadId(kadId *kademlia.ID) {
 }
 
 func (mp *MessagePacket) AppendTo(dst []byte) []byte {
+	mp.mu.Lock()
+	defer mp.mu.Unlock()
+
 	dst = bytesutil.AppendUint32BE(dst, mp.mid)
 	dst = append(dst, mp.qos)
 	dst = bytesutil.AppendUint16BE(dst, uint16(len(mp.topic)))
