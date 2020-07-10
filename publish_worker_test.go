@@ -53,7 +53,7 @@ func TestPublishWorker(t *testing.T) {
 	require.Equal(t, sKid, pkt.subKadId)
 
 	dst := make([]byte, 0)
-	pktByte, ok := twp.acquire(sKid).Pull()
+	pktByte, ok := twp.acquire(sKid).PullMessagePacket()
 	require.Equal(t, true, ok)
 	require.Equal(t, pkt.AppendTo(dst), pktByte)
 
@@ -95,7 +95,7 @@ func TestPublishWorker(t *testing.T) {
 	require.Equal(t, sKid, pkt.subKadId)
 
 	dst = make([]byte, 0)
-	pktByte, ok = twp.acquire(sKid).Pull()
+	pktByte, ok = twp.acquire(sKid).PullMessagePacket()
 	require.Equal(t, true, ok)
 	require.Equal(t, pkt.AppendTo(dst), pktByte)
 

@@ -24,35 +24,37 @@ func newTwin(peerNodeId *kademlia.ID) *twin {
 	return &twin{
 		kadId:   peerNodeId,
 		tc:      make(chan []byte, defaultTwinChannelSize),
+		mu:      sync.RWMutex{},
 		online:  true,
 		counter: uint32(0),
 		offNum:  uint32(0),
-		mu:      sync.RWMutex{},
 	}
 }
 
-func (t *twin) Push(pkt []byte) error {
+func (t *twin) CheckOnline() bool {
 	t.mu.RLock()
-	flag := t.online
-	t.mu.RUnlock()
+	defer t.mu.RUnlock()
 
-	t.mu.Lock()
-	defer t.mu.Unlock()
+	// Todo: test the peer-provide's status
 
-	if !flag {
+	return t.online
+}
+
+func (t *twin) PushMessagePacket(pkt []byte) error {
+	if !t.CheckOnline() {
 		//maybe need to cache the pkt.
 
 		atomic.AddUint32(&t.offNum, uint32(1))
 		return fmt.Errorf("the '%s:%d' host's twin is not online", t.kadId.Host.String(), t.kadId.Port)
 	}
 
-	atomic.AddUint32(&t.counter, uint32(1))
 	t.tc <- pkt
+	atomic.AddUint32(&t.counter, uint32(1))
 
 	return nil
 }
 
-func (t *twin) Pull() ([]byte, bool) {
+func (t *twin) PullMessagePacket() ([]byte, bool) {
 	pkt, ok := <-t.tc
 	return pkt, ok
 }

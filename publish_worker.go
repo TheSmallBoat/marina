@@ -64,7 +64,7 @@ func processMessagePacket(pubW *publishWorker, pkt *MessagePacket) {
 			pkt.SetSubscriberKadId(tw.kadId)
 
 			dst := make([]byte, 0)
-			err := tw.Push(pkt.AppendTo(dst))
+			err := tw.PushMessagePacket(pkt.AppendTo(dst))
 			if err != nil {
 				atomic.AddUint32(&pubW.fwdErrNum, uint32(1))
 			} else {

@@ -45,33 +45,33 @@ func TestTwinsPool(t *testing.T) {
 	require.Equal(t, uint32(0), tw1.counter)
 	require.Equal(t, uint32(0), tw1.offNum)
 	require.Equal(t, true, tw1.online)
-	require.NoError(t, tw1.Push([]byte("hello,world")))
+	require.NoError(t, tw1.PushMessagePacket([]byte("hello,world")))
 	require.Equal(t, uint32(1), tw1.counter)
 	require.Equal(t, uint32(0), tw1.offNum)
 
-	b, ok := tw1.Pull()
+	b, ok := tw1.PullMessagePacket()
 	require.Equal(t, true, ok)
 	require.Equal(t, []byte("hello,world"), b)
 
 	tw1.turnToOffline()
 	require.Equal(t, false, tw1.online)
-	require.Error(t, tw1.Push([]byte("hello,world.")))
+	require.Error(t, tw1.PushMessagePacket([]byte("hello,world.")))
 	require.Equal(t, uint32(1), tw1.counter)
 	require.Equal(t, uint32(1), tw1.offNum)
 
 	tw1.turnToOnline()
 	require.Equal(t, true, tw1.online)
-	require.NoError(t, tw1.Push([]byte("hello,world..")))
+	require.NoError(t, tw1.PushMessagePacket([]byte("hello,world..")))
 	require.Equal(t, uint32(2), tw1.counter)
 	require.Equal(t, uint32(1), tw1.offNum)
 
-	b, ok = tw1.Pull()
+	b, ok = tw1.PullMessagePacket()
 	require.Equal(t, true, ok)
 	require.Equal(t, []byte("hello,world.."), b)
 
 	tw1.setOnlineStatus(false)
 	require.Equal(t, false, tw1.online)
-	require.Error(t, tw1.Push([]byte("hello,world...")))
+	require.Error(t, tw1.PushMessagePacket([]byte("hello,world...")))
 	require.Equal(t, uint32(2), tw1.counter)
 	require.Equal(t, uint32(2), tw1.offNum)
 
@@ -96,17 +96,17 @@ func TestTwinsPool(t *testing.T) {
 	require.Equal(t, uint32(0), tw2.offNum)
 	require.Equal(t, true, tw2.online)
 
-	require.NoError(t, tw2.Push([]byte("hello,world....")))
+	require.NoError(t, tw2.PushMessagePacket([]byte("hello,world....")))
 	require.Equal(t, uint32(1), tw2.counter)
 	require.Equal(t, uint32(0), tw2.offNum)
 
-	b2, ok2 := tw2.Pull()
+	b2, ok2 := tw2.PullMessagePacket()
 	require.Equal(t, true, ok2)
 	require.Equal(t, []byte("hello,world...."), b2)
 
 	tw2.turnToOffline()
 	require.Equal(t, false, tw2.online)
-	require.Error(t, tw2.Push([]byte("hello,world......")))
+	require.Error(t, tw2.PushMessagePacket([]byte("hello,world......")))
 	require.Equal(t, uint32(1), tw2.counter)
 	require.Equal(t, uint32(1), tw2.offNum)
 
@@ -141,11 +141,11 @@ func BenchmarkTwinsPool(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		err := tw.Push(buf)
+		err := tw.PushMessagePacket(buf)
 		if err != nil {
 			b.Fatal(err)
 		}
-		tw.Pull()
+		tw.PullMessagePacket()
 	}
 
 	tp.release(tw)
@@ -153,11 +153,11 @@ func BenchmarkTwinsPool(b *testing.B) {
 
 	tw2 := tp.acquire(kid)
 	for i := 0; i < b.N; i++ {
-		err := tw2.Push(buf)
+		err := tw2.PushMessagePacket(buf)
 		if err != nil {
 			b.Fatal(err)
 		}
-		tw2.Pull()
+		tw2.PullMessagePacket()
 	}
 
 }
