@@ -9,6 +9,9 @@ type twinTunnel struct {
 	provider *rpc.Provider
 }
 
-func newTwinTunnel(tw *twin, prd *rpc.Provider) *twinTunnel {
-	return &twinTunnel{}
+func newTwinTunnel(tw *twin, pvd *rpc.Provider) *twinTunnel {
+	if tw.kadId == pvd.KadID() {
+		return &twinTunnel{tw, pvd}
+	}
+	return nil
 }
