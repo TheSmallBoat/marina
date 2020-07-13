@@ -68,9 +68,8 @@ func processMessagePacket(pubW *publishWorker, pkt *MessagePacket) {
 
 	pkt.SetBrokerKadId(pubW.kadId)
 
-	entities := make([]interface{}, 0)
-	err := pubW.tt.LinkedEntities(pkt.topic, &entities)
-	if err != nil || len(entities) < 1 {
+	entities := pubW.EntitiesFor(pkt.topic)
+	if entities == nil {
 		atomic.AddUint32(&pubW.pubErrNum, uint32(1))
 		return
 	}
