@@ -41,7 +41,7 @@ func TestTwinsPool(t *testing.T) {
 
 	require.Equal(t, 1, tp.length())
 	require.Equal(t, 1, len(tp.mp))
-	require.Equal(t, tw1, tp.mp[kid1.Pub.String()])
+	require.Equal(t, tw1, tp.mp[kid1.Pub])
 	require.Equal(t, uint32(0), tw1.counter)
 	require.Equal(t, uint32(0), tw1.offNum)
 	require.Equal(t, true, tw1.online)
@@ -91,7 +91,7 @@ func TestTwinsPool(t *testing.T) {
 
 	require.Equal(t, 1, tp.length())
 	require.Equal(t, 1, len(tp.mp))
-	require.Equal(t, tw2, tp.mp[kid2.Pub.String()])
+	require.Equal(t, tw2, tp.mp[kid2.Pub])
 	require.Equal(t, uint32(0), tw2.counter)
 	require.Equal(t, uint32(0), tw2.offNum)
 	require.Equal(t, true, tw2.online)
