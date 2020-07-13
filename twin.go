@@ -31,7 +31,7 @@ func newTwin(peerNodeId *kademlia.ID) *twin {
 	}
 }
 
-func (t *twin) CheckOnline() bool {
+func (t *twin) CheckOnlineStatus() bool {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
 
@@ -41,7 +41,7 @@ func (t *twin) CheckOnline() bool {
 }
 
 func (t *twin) PushMessagePacket(pkt []byte) error {
-	if !t.CheckOnline() {
+	if !t.CheckOnlineStatus() {
 		//maybe need to cache the pkt.
 
 		atomic.AddUint32(&t.offNum, uint32(1))
