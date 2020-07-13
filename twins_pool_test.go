@@ -31,7 +31,7 @@ func TestTwinsPool(t *testing.T) {
 
 	tp := newTwinsPool()
 	require.Equal(t, 0, tp.length())
-	require.Empty(t, tp.mp)
+	require.Empty(t, tp.mpt)
 
 	// section 1:
 	kid1, err1 := generateKadId()
@@ -40,8 +40,8 @@ func TestTwinsPool(t *testing.T) {
 	require.Equal(t, true, kid1.Pub.String() == tw1.kadId.Pub.String())
 
 	require.Equal(t, 1, tp.length())
-	require.Equal(t, 1, len(tp.mp))
-	require.Equal(t, tw1, tp.mp[kid1.Pub])
+	require.Equal(t, 1, len(tp.mpt))
+	require.Equal(t, tw1, tp.mpt[kid1.Pub])
 	require.Equal(t, uint32(0), tw1.counter)
 	require.Equal(t, uint32(0), tw1.offNum)
 	require.Equal(t, true, tw1.online)
@@ -77,7 +77,7 @@ func TestTwinsPool(t *testing.T) {
 
 	tp.release(tw1)
 	require.Equal(t, 0, tp.length())
-	require.Empty(t, tp.mp)
+	require.Empty(t, tp.mpt)
 
 	// section 2:
 	kid2, err2 := generateKadId()
@@ -90,8 +90,8 @@ func TestTwinsPool(t *testing.T) {
 	require.Equal(t, true, kid2.Pub.String() == tw2.kadId.Pub.String())
 
 	require.Equal(t, 1, tp.length())
-	require.Equal(t, 1, len(tp.mp))
-	require.Equal(t, tw2, tp.mp[kid2.Pub])
+	require.Equal(t, 1, len(tp.mpt))
+	require.Equal(t, tw2, tp.mpt[kid2.Pub])
 	require.Equal(t, uint32(0), tw2.counter)
 	require.Equal(t, uint32(0), tw2.offNum)
 	require.Equal(t, true, tw2.online)
@@ -112,7 +112,7 @@ func TestTwinsPool(t *testing.T) {
 
 	tp.release(tw2)
 	require.Equal(t, 0, tp.length())
-	require.Empty(t, tp.mp)
+	require.Empty(t, tp.mpt)
 
 	// section 3:
 	tw1 = tp.acquire(kid1)
@@ -126,7 +126,7 @@ func TestTwinsPool(t *testing.T) {
 
 func BenchmarkTwinsPool(b *testing.B) {
 	tp := newTwinsPool()
-	require.Empty(b, tp.mp)
+	require.Empty(b, tp.mpt)
 
 	kid, err1 := generateKadId()
 	require.NoError(b, err1)
@@ -149,7 +149,7 @@ func BenchmarkTwinsPool(b *testing.B) {
 	}
 
 	tp.release(tw)
-	require.Empty(b, tp.mp)
+	require.Empty(b, tp.mpt)
 
 	tw2 := tp.acquire(kid)
 	for i := 0; i < b.N; i++ {

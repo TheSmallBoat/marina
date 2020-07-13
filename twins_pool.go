@@ -3,32 +3,38 @@ package marina
 import (
 	"sync"
 
+	rpc "github.com/TheSmallBoat/carlo/streaming_rpc"
 	"github.com/lithdew/kademlia"
 )
 
 type twinsPool struct {
 	mu sync.RWMutex
 
-	sp sync.Pool
-	mp map[kademlia.PublicKey]*twin
+	sp  sync.Pool
+	mpt map[kademlia.PublicKey]*twin
+	mpp map[kademlia.PublicKey]*rpc.Provider
 }
 
 func newTwinsPool() *twinsPool {
-	return &twinsPool{mp: make(map[kademlia.PublicKey]*twin), sp: sync.Pool{}}
+	return &twinsPool{
+		sp:  sync.Pool{},
+		mpt: make(map[kademlia.PublicKey]*twin),
+		mpp: make(map[kademlia.PublicKey]*rpc.Provider),
+	}
 }
 
 func (tp *twinsPool) length() int {
 	tp.mu.RLock()
 	defer tp.mu.RUnlock()
 
-	return len(tp.mp)
+	return len(tp.mpt)
 }
 
 func (tp *twinsPool) exist(peerNodeId *kademlia.ID) (*twin, bool) {
 	tp.mu.RLock()
 	defer tp.mu.RUnlock()
 
-	t, exist := tp.mp[peerNodeId.Pub]
+	t, exist := tp.mpt[peerNodeId.Pub]
 	return t, exist
 }
 
@@ -52,7 +58,7 @@ func (tp *twinsPool) acquire(peerNodeId *kademlia.ID) *twin {
 	t = v.(*twin)
 
 	tp.mu.Lock()
-	tp.mp[t.kadId.Pub] = t
+	tp.mpt[t.kadId.Pub] = t
 	tp.mu.Unlock()
 
 	return t
@@ -60,12 +66,12 @@ func (tp *twinsPool) acquire(peerNodeId *kademlia.ID) *twin {
 
 func (tp *twinsPool) release(t *twin) {
 	tp.mu.RLock()
-	_, exist := tp.mp[t.kadId.Pub]
+	_, exist := tp.mpt[t.kadId.Pub]
 	tp.mu.RUnlock()
 
 	if exist {
 		tp.mu.Lock()
-		delete(tp.mp, t.kadId.Pub)
+		delete(tp.mpt, t.kadId.Pub)
 		tp.mu.Unlock()
 	}
 

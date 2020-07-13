@@ -26,7 +26,7 @@ func TestPublishWorker(t *testing.T) {
 
 	twp := newTwinsPool()
 	require.Equal(t, 0, twp.length())
-	require.Empty(t, twp.mp)
+	require.Empty(t, twp.mpt)
 
 	tw := twp.acquire(sKid)
 	err4 := tt.EntityLink([]byte("/finance/tom"), tw)
