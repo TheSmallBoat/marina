@@ -30,8 +30,11 @@ func TestTwinsPool(t *testing.T) {
 	defer goleak.VerifyNone(t)
 
 	tp := newTwinsPool()
-	require.Equal(t, 0, tp.length())
+	twn, pdn := tp.length()
+	require.Equal(t, 0, twn)
+	require.Equal(t, 0, pdn)
 	require.Empty(t, tp.mpt)
+	require.Empty(t, tp.mpp)
 
 	// section 1:
 	kid1, err1 := generateKadId()
@@ -39,8 +42,11 @@ func TestTwinsPool(t *testing.T) {
 	tw1 := tp.acquire(kid1)
 	require.Equal(t, true, kid1.Pub.String() == tw1.kadId.Pub.String())
 
-	require.Equal(t, 1, tp.length())
+	twn, pdn = tp.length()
+	require.Equal(t, 1, twn)
 	require.Equal(t, 1, len(tp.mpt))
+	require.Equal(t, 0, pdn)
+	require.Equal(t, 0, len(tp.mpp))
 	require.Equal(t, tw1, tp.mpt[kid1.Pub])
 	require.Equal(t, uint32(0), tw1.counter)
 	require.Equal(t, uint32(0), tw1.offNum)
@@ -76,7 +82,11 @@ func TestTwinsPool(t *testing.T) {
 	require.Equal(t, uint32(2), tw1.offNum)
 
 	tp.release(tw1)
-	require.Equal(t, 0, tp.length())
+	twn, pdn = tp.length()
+	require.Equal(t, 0, twn)
+	require.Equal(t, 0, len(tp.mpt))
+	require.Equal(t, 0, pdn)
+	require.Equal(t, 0, len(tp.mpp))
 	require.Empty(t, tp.mpt)
 
 	// section 2:
@@ -89,8 +99,11 @@ func TestTwinsPool(t *testing.T) {
 	require.Equal(t, tw1, tw2)
 	require.Equal(t, true, kid2.Pub.String() == tw2.kadId.Pub.String())
 
-	require.Equal(t, 1, tp.length())
+	twn, pdn = tp.length()
+	require.Equal(t, 1, twn)
 	require.Equal(t, 1, len(tp.mpt))
+	require.Equal(t, 0, pdn)
+	require.Equal(t, 0, len(tp.mpp))
 	require.Equal(t, tw2, tp.mpt[kid2.Pub])
 	require.Equal(t, uint32(0), tw2.counter)
 	require.Equal(t, uint32(0), tw2.offNum)
@@ -111,16 +124,32 @@ func TestTwinsPool(t *testing.T) {
 	require.Equal(t, uint32(1), tw2.offNum)
 
 	tp.release(tw2)
-	require.Equal(t, 0, tp.length())
+	twn, pdn = tp.length()
+	require.Equal(t, 0, twn)
+	require.Equal(t, 0, len(tp.mpt))
+	require.Equal(t, 0, pdn)
+	require.Equal(t, 0, len(tp.mpp))
 	require.Empty(t, tp.mpt)
 
 	// section 3:
 	tw1 = tp.acquire(kid1)
-	require.Equal(t, 1, tp.length())
+	twn, pdn = tp.length()
+	require.Equal(t, 1, twn)
+	require.Equal(t, 1, len(tp.mpt))
+	require.Equal(t, 0, pdn)
+	require.Equal(t, 0, len(tp.mpp))
 	tw2 = tp.acquire(kid2)
-	require.Equal(t, 2, tp.length())
+	twn, pdn = tp.length()
+	require.Equal(t, 2, twn)
+	require.Equal(t, 2, len(tp.mpt))
+	require.Equal(t, 0, pdn)
+	require.Equal(t, 0, len(tp.mpp))
 	tw3 := tp.acquire(kid2)
-	require.Equal(t, 2, tp.length())
+	twn, pdn = tp.length()
+	require.Equal(t, 2, twn)
+	require.Equal(t, 2, len(tp.mpt))
+	require.Equal(t, 0, pdn)
+	require.Equal(t, 0, len(tp.mpp))
 	require.Equal(t, tw2.kadId, tw3.kadId)
 }
 

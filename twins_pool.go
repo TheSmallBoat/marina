@@ -9,25 +9,26 @@ import (
 
 type twinsPool struct {
 	mu sync.RWMutex
+	sp sync.Pool
 
-	sp  sync.Pool
 	mpt map[kademlia.PublicKey]*twin
 	mpp map[kademlia.PublicKey]*rpc.Provider
 }
 
 func newTwinsPool() *twinsPool {
 	return &twinsPool{
+		mu:  sync.RWMutex{},
 		sp:  sync.Pool{},
 		mpt: make(map[kademlia.PublicKey]*twin),
 		mpp: make(map[kademlia.PublicKey]*rpc.Provider),
 	}
 }
 
-func (tp *twinsPool) length() int {
+func (tp *twinsPool) length() (int, int) {
 	tp.mu.RLock()
 	defer tp.mu.RUnlock()
 
-	return len(tp.mpt)
+	return len(tp.mpt), len(tp.mpp)
 }
 
 func (tp *twinsPool) exist(peerNodeId *kademlia.ID) (*twin, bool) {
@@ -41,7 +42,9 @@ func (tp *twinsPool) exist(peerNodeId *kademlia.ID) (*twin, bool) {
 func (tp *twinsPool) acquire(peerNodeId *kademlia.ID) *twin {
 	t, exist := tp.exist(peerNodeId)
 	if exist {
-		t.turnToOnline()
+		if !t.onlineStatus() {
+			t.turnToOnline()
+		}
 		return t
 	}
 
