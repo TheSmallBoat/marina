@@ -36,13 +36,12 @@ func NewPublishWorker(bKadId *kademlia.ID, tTree *cabinet.TTree) *publishWorker 
 	}
 }
 
-func (p *publishWorker) ReadyStatusFor(topic []byte) bool {
-	entities := make([]interface{}, 0)
-	err := p.tt.LinkedEntities(topic, &entities)
-	if err != nil || len(entities) < 1 {
-		return false
+func (p *publishWorker) EntitiesNumFor(topic []byte) int {
+	var entities = p.EntitiesFor(topic)
+	if entities == nil {
+		return 0
 	}
-	return true
+	return len(entities)
 }
 
 func (p *publishWorker) EntitiesFor(topic []byte) []interface{} {
