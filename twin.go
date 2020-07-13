@@ -11,7 +11,7 @@ import (
 const defaultTwinChannelSize = 32 // The default channel size for the twin
 
 type twin struct {
-	kadId *kademlia.ID // the peer node ID
+	kadId *kademlia.ID // the peer-node ID that equal to the remote peer-node
 	tc    chan []byte
 
 	mu      sync.RWMutex
@@ -20,9 +20,9 @@ type twin struct {
 	offNum  uint32 // the counter for the push operation while offline.
 }
 
-func newTwin(peerNodeId *kademlia.ID) *twin {
+func newTwin(remotePeerNodeId *kademlia.ID) *twin {
 	return &twin{
-		kadId:   peerNodeId,
+		kadId:   remotePeerNodeId,
 		tc:      make(chan []byte, defaultTwinChannelSize),
 		mu:      sync.RWMutex{},
 		online:  true,
@@ -31,17 +31,15 @@ func newTwin(peerNodeId *kademlia.ID) *twin {
 	}
 }
 
-func (t *twin) CheckOnlineStatus() bool {
+func (t *twin) onlineStatus() bool {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
-
-	// Todo: test the peer-provide's status
 
 	return t.online
 }
 
 func (t *twin) PushMessagePacket(pkt []byte) error {
-	if !t.CheckOnlineStatus() {
+	if !t.onlineStatus() {
 		//maybe need to cache the pkt.
 
 		atomic.AddUint32(&t.offNum, uint32(1))
