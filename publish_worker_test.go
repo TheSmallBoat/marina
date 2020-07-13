@@ -37,6 +37,21 @@ func TestPublishWorker(t *testing.T) {
 	pw := NewPublishWorker(bKid, tt)
 	defer pw.Close()
 
+	status := pw.ReadyStatusFor([]byte("/finance/tom"))
+	require.Equal(t, true, status)
+
+	entities := make([]interface{}, 0)
+	entities = pw.EntitiesFor([]byte("/finance/tom"))
+	require.Equal(t, 1, len(entities))
+	twee := entities[0].(*twin)
+	require.Equal(t, tw, twee)
+
+	status = pw.ReadyStatusFor([]byte("/finance/jack"))
+	require.Equal(t, false, status)
+
+	entities = pw.EntitiesFor([]byte("/finance/jack"))
+	require.Equal(t, true, entities == nil)
+
 	pkt := NewMessagePacket(pKid, uint32(88), byte(0), []byte("/finance/tom"), []byte("xyz123456abc"))
 	pw.PublishToBroker(pkt)
 	pw.Wait()
@@ -79,7 +94,7 @@ func TestPublishWorker(t *testing.T) {
 	require.Equal(t, uint32(1), pw.pubErrNum)
 	require.Equal(t, uint32(0), pw.fwdErrNum)
 
-	pkt = NewMessagePacket(pKid, uint32(90), byte(0), []byte("/finance/tom"), []byte("xyz123456abc.."))
+	pkt = NewMessagePacket(pKid, uint32(90), byte(1), []byte("/finance/tom"), []byte("xyz123456abc.."))
 	pw.PublishToBroker(pkt)
 	pw.Wait()
 
@@ -99,7 +114,6 @@ func TestPublishWorker(t *testing.T) {
 	require.Equal(t, true, ok)
 	require.Equal(t, pkt.AppendTo(dst), pktByte)
 
-	entities := make([]interface{}, 0)
 	err6 := tt.LinkedEntities([]byte("/finance/tom"), &entities)
 	require.NoError(t, err6)
 	require.Equal(t, 1, len(entities))
