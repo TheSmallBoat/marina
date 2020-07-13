@@ -53,7 +53,7 @@ func TestPublishWorker(t *testing.T) {
 	require.Equal(t, 0, num)
 
 	pkt := NewMessagePacket(pKid, uint32(88), byte(0), []byte("/finance/tom"), []byte("xyz123456abc"))
-	pw.PublishToBroker(pkt)
+	pw.WorkFor(pkt)
 	pw.Wait()
 
 	require.Equal(t, uint32(1), twp.acquire(sKid).counter)
@@ -86,7 +86,7 @@ func TestPublishWorker(t *testing.T) {
 	require.Equal(t, pkt.subKadId.AppendTo(dst), pkt_.subKadId.AppendTo(dst))
 
 	pkt = NewMessagePacket(pKid, uint32(89), byte(0), []byte("/finance/jack"), []byte("xyz123456abc"))
-	pw.PublishToBroker(pkt)
+	pw.WorkFor(pkt)
 	pw.Wait()
 
 	require.Equal(t, uint32(1), pw.pubSucNum)
@@ -95,7 +95,7 @@ func TestPublishWorker(t *testing.T) {
 	require.Equal(t, uint32(0), pw.fwdErrNum)
 
 	pkt = NewMessagePacket(pKid, uint32(90), byte(1), []byte("/finance/tom"), []byte("xyz123456abc.."))
-	pw.PublishToBroker(pkt)
+	pw.WorkFor(pkt)
 	pw.Wait()
 
 	require.Equal(t, uint32(2), twp.acquire(sKid).counter)
@@ -128,7 +128,7 @@ func TestPublishWorker(t *testing.T) {
 	require.Equal(t, false, tw.online)
 
 	pkt = NewMessagePacket(pKid, uint32(91), byte(0), []byte("/finance/tom"), []byte("x123456abc..."))
-	pw.PublishToBroker(pkt)
+	pw.WorkFor(pkt)
 	pw.Wait()
 
 	require.Equal(t, uint32(3), pw.pubSucNum)
@@ -140,7 +140,7 @@ func TestPublishWorker(t *testing.T) {
 	require.NoError(t, err7)
 
 	pkt = NewMessagePacket(pKid, uint32(92), byte(1), []byte("/finance/tom"), []byte("123456abc"))
-	pw.PublishToBroker(pkt)
+	pw.WorkFor(pkt)
 	pw.Wait()
 
 	require.Equal(t, uint32(3), pw.pubSucNum)

@@ -53,17 +53,17 @@ func (p *publishWorker) EntitiesFor(topic []byte) []interface{} {
 	return entities
 }
 
-func (p *publishWorker) PublishToBroker(pkt *MessagePacket) {
+func (p *publishWorker) WorkFor(pkt *MessagePacket) {
 	if pkt.qos == byte(1) {
 		// Todo:process response
 	}
 
 	p.wg.Add(1)
-	p.tp.SubmitTask(func() { processMessagePacket(p, pkt) })
+	p.tp.SubmitTask(func() { forwardMessagePacket(p, pkt) })
 }
 
 // To find the matched topic, and put the messagePacket to the twin
-func processMessagePacket(pubW *publishWorker, pkt *MessagePacket) {
+func forwardMessagePacket(pubW *publishWorker, pkt *MessagePacket) {
 	defer pubW.wg.Done()
 
 	pkt.SetBrokerKadId(pubW.kadId)
