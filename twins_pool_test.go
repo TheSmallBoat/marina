@@ -69,9 +69,15 @@ func TestTwinsPool(t *testing.T) {
 	require.Equal(t, false, tp.pairStatus(kid1))
 
 	tp.appendProviders(&prd1)
+	require.Equal(t, 1, len(tp.mpt))
 	require.Equal(t, 1, len(tp.mpp))
 	require.Equal(t, true, tw1.onlineStatus())
 	require.Equal(t, true, tp.pairStatus(kid1))
+
+	// the same provider append again
+	tp.appendProviders(&prd1)
+	require.Equal(t, 1, len(tp.mpt))
+	require.Equal(t, 1, len(tp.mpp))
 
 	tp.checkTwinsProvidersPairStatus()
 	require.Equal(t, true, tw1.onlineStatus())
