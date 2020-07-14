@@ -11,6 +11,16 @@ import (
 	"go.uber.org/goleak"
 )
 
+//var _ twinServiceProvider = (*provider)(nil)
+
+type provider struct {
+	kadId *kademlia.ID
+}
+
+func (p *provider) KadID() *kademlia.ID {
+	return p.kadId
+}
+
 func generateKadId() (*kademlia.ID, error) {
 	sk := sr.GenerateSecretKey()
 	addr, err := net.ResolveTCPAddr("tcp", ":9000")
@@ -39,14 +49,33 @@ func TestTwinsPool(t *testing.T) {
 	// section 1:
 	kid1, err1 := generateKadId()
 	require.NoError(t, err1)
+
+	var prd1 twinServiceProvider = &provider{kadId: kid1}
 	tw1 := tp.acquire(kid1)
-	require.Equal(t, true, kid1.Pub.String() == tw1.kadId.Pub.String())
+
+	require.Equal(t, true, kid1.Pub == tw1.kadId.Pub)
+	require.Equal(t, true, kid1.Pub == prd1.KadID().Pub)
 
 	twn, pdn = tp.length()
 	require.Equal(t, 1, twn)
 	require.Equal(t, 1, len(tp.mpt))
 	require.Equal(t, 0, pdn)
 	require.Equal(t, 0, len(tp.mpp))
+
+	require.Equal(t, false, tp.pairStatus(kid1))
+
+	tp.checkTwinsProvidersPairStatus()
+	require.Equal(t, false, tw1.onlineStatus())
+	require.Equal(t, false, tp.pairStatus(kid1))
+
+	tp.appendProviders(&prd1)
+	require.Equal(t, 1, len(tp.mpp))
+	require.Equal(t, true, tp.pairStatus(kid1))
+
+	tp.checkTwinsProvidersPairStatus()
+	require.Equal(t, true, tw1.onlineStatus())
+	require.Equal(t, true, tp.pairStatus(kid1))
+
 	require.Equal(t, tw1, tp.mpt[kid1.Pub])
 	require.Equal(t, uint32(0), tw1.counter)
 	require.Equal(t, uint32(0), tw1.offNum)
@@ -64,12 +93,14 @@ func TestTwinsPool(t *testing.T) {
 	require.Error(t, tw1.PushMessagePacket([]byte("hello,world.")))
 	require.Equal(t, uint32(1), tw1.counter)
 	require.Equal(t, uint32(1), tw1.offNum)
+	require.Equal(t, true, tp.pairStatus(kid1))
 
 	tw1.turnToOnline()
 	require.Equal(t, true, tw1.online)
 	require.NoError(t, tw1.PushMessagePacket([]byte("hello,world..")))
 	require.Equal(t, uint32(2), tw1.counter)
 	require.Equal(t, uint32(1), tw1.offNum)
+	require.Equal(t, true, tp.pairStatus(kid1))
 
 	b, ok = tw1.PullMessagePacket()
 	require.Equal(t, true, ok)
@@ -80,34 +111,47 @@ func TestTwinsPool(t *testing.T) {
 	require.Error(t, tw1.PushMessagePacket([]byte("hello,world...")))
 	require.Equal(t, uint32(2), tw1.counter)
 	require.Equal(t, uint32(2), tw1.offNum)
+	require.Equal(t, true, tp.pairStatus(kid1))
 
 	tp.release(tw1)
 	twn, pdn = tp.length()
 	require.Equal(t, 0, twn)
 	require.Equal(t, 0, len(tp.mpt))
-	require.Equal(t, 0, pdn)
-	require.Equal(t, 0, len(tp.mpp))
+	require.Equal(t, 1, pdn)
+	require.Equal(t, 1, len(tp.mpp))
 	require.Empty(t, tp.mpt)
 
-	// section 2:
-	kid2, err2 := generateKadId()
-	require.NoError(t, err2)
-	require.Equal(t, false, kid1.Pub.String() == kid2.Pub.String())
+	require.Equal(t, false, tp.pairStatus(kid1))
 
-	tw2 := tp.acquire(kid2)
-	// the same point about the tw,tw2
-	require.Equal(t, tw1, tw2)
-	require.Equal(t, true, kid2.Pub.String() == tw2.kadId.Pub.String())
+	tp.checkTwinsProvidersPairStatus()
+	require.Equal(t, true, tw1.onlineStatus())
+	require.Equal(t, true, tp.pairStatus(kid1))
 
 	twn, pdn = tp.length()
 	require.Equal(t, 1, twn)
 	require.Equal(t, 1, len(tp.mpt))
-	require.Equal(t, 0, pdn)
-	require.Equal(t, 0, len(tp.mpp))
+	require.Equal(t, 1, pdn)
+	require.Equal(t, 1, len(tp.mpp))
+
+	// section 2:
+	kid2, err2 := generateKadId()
+	require.NoError(t, err2)
+	require.Equal(t, false, kid1.Pub == kid2.Pub)
+
+	tw2 := tp.acquire(kid2)
+	require.Equal(t, true, kid2.Pub == tw2.kadId.Pub)
+
+	twn, pdn = tp.length()
+	require.Equal(t, 2, twn)
+	require.Equal(t, 2, len(tp.mpt))
+	require.Equal(t, 1, pdn)
+	require.Equal(t, 1, len(tp.mpp))
 	require.Equal(t, tw2, tp.mpt[kid2.Pub])
 	require.Equal(t, uint32(0), tw2.counter)
 	require.Equal(t, uint32(0), tw2.offNum)
 	require.Equal(t, true, tw2.online)
+	require.Equal(t, true, tp.pairStatus(kid1))
+	require.Equal(t, false, tp.pairStatus(kid2))
 
 	require.NoError(t, tw2.PushMessagePacket([]byte("hello,world....")))
 	require.Equal(t, uint32(1), tw2.counter)
@@ -117,7 +161,10 @@ func TestTwinsPool(t *testing.T) {
 	require.Equal(t, true, ok2)
 	require.Equal(t, []byte("hello,world...."), b2)
 
-	tw2.turnToOffline()
+	tp.checkTwinsProvidersPairStatus()
+	require.Equal(t, true, tw1.onlineStatus())
+	require.Equal(t, false, tw2.onlineStatus())
+
 	require.Equal(t, false, tw2.online)
 	require.Error(t, tw2.PushMessagePacket([]byte("hello,world......")))
 	require.Equal(t, uint32(1), tw2.counter)
@@ -125,31 +172,33 @@ func TestTwinsPool(t *testing.T) {
 
 	tp.release(tw2)
 	twn, pdn = tp.length()
-	require.Equal(t, 0, twn)
-	require.Equal(t, 0, len(tp.mpt))
-	require.Equal(t, 0, pdn)
-	require.Equal(t, 0, len(tp.mpp))
-	require.Empty(t, tp.mpt)
+	require.Equal(t, 1, twn)
+	require.Equal(t, 1, len(tp.mpt))
+	require.Equal(t, 1, pdn)
+	require.Equal(t, 1, len(tp.mpp))
+
+	require.Equal(t, true, tp.pairStatus(kid1))
+	require.Equal(t, false, tp.pairStatus(kid2))
 
 	// section 3:
 	tw1 = tp.acquire(kid1)
 	twn, pdn = tp.length()
 	require.Equal(t, 1, twn)
 	require.Equal(t, 1, len(tp.mpt))
-	require.Equal(t, 0, pdn)
-	require.Equal(t, 0, len(tp.mpp))
+	require.Equal(t, 1, pdn)
+	require.Equal(t, 1, len(tp.mpp))
 	tw2 = tp.acquire(kid2)
 	twn, pdn = tp.length()
 	require.Equal(t, 2, twn)
 	require.Equal(t, 2, len(tp.mpt))
-	require.Equal(t, 0, pdn)
-	require.Equal(t, 0, len(tp.mpp))
+	require.Equal(t, 1, pdn)
+	require.Equal(t, 1, len(tp.mpp))
 	tw3 := tp.acquire(kid2)
 	twn, pdn = tp.length()
 	require.Equal(t, 2, twn)
 	require.Equal(t, 2, len(tp.mpt))
-	require.Equal(t, 0, pdn)
-	require.Equal(t, 0, len(tp.mpp))
+	require.Equal(t, 1, pdn)
+	require.Equal(t, 1, len(tp.mpp))
 	require.Equal(t, tw2.kadId, tw3.kadId)
 }
 
