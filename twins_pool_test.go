@@ -11,8 +11,6 @@ import (
 	"go.uber.org/goleak"
 )
 
-//var _ twinServiceProvider = (*provider)(nil)
-
 type provider struct {
 	kadId *kademlia.ID
 }
@@ -245,5 +243,4 @@ func BenchmarkTwinsPool(b *testing.B) {
 		}
 		tw2.PullMessagePacket()
 	}
-
 }
