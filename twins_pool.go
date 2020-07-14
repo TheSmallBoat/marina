@@ -30,7 +30,9 @@ func (tp *twinsPool) length() (int, int) {
 	return len(tp.mpt), len(tp.mpp)
 }
 
-func (tp *twinsPool) appendProviders(providers ...*twinServiceProvider) {
+// return the number of the append providers
+func (tp *twinsPool) appendProviders(providers ...*twinServiceProvider) int {
+	var pNum = 0
 	for i := range providers {
 		kadId := (*providers[i]).KadID()
 		_, pExist := tp.existServiceProvider(kadId)
@@ -38,10 +40,12 @@ func (tp *twinsPool) appendProviders(providers ...*twinServiceProvider) {
 			tp.mu.Lock()
 			tp.mpp[kadId.Pub] = providers[i]
 			tp.mu.Unlock()
+			pNum++
 		}
 		_ = tp.acquire(kadId)
 		// todo: twin run go routine task
 	}
+	return pNum
 }
 
 //return the number of offline-twins, the number of missed-twins
