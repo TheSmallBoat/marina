@@ -62,7 +62,9 @@ func TestTwinsPool(t *testing.T) {
 
 	require.Equal(t, false, tp.pairStatus(kid1))
 
-	tp.checkTwinsProvidersPairStatus()
+	otn, mtn := tp.checkTwinsProvidersPairStatus()
+	require.Equal(t, 1, otn)
+	require.Equal(t, 0, mtn)
 	require.Equal(t, false, tw1.onlineStatus())
 	require.Equal(t, false, tp.pairStatus(kid1))
 
@@ -77,7 +79,9 @@ func TestTwinsPool(t *testing.T) {
 	require.Equal(t, 1, len(tp.mpt))
 	require.Equal(t, 1, len(tp.mpp))
 
-	tp.checkTwinsProvidersPairStatus()
+	otn, mtn = tp.checkTwinsProvidersPairStatus()
+	require.Equal(t, 0, otn)
+	require.Equal(t, 0, mtn)
 	require.Equal(t, true, tw1.onlineStatus())
 	require.Equal(t, true, tp.pairStatus(kid1))
 
@@ -129,7 +133,9 @@ func TestTwinsPool(t *testing.T) {
 	require.Equal(t, false, tw1.onlineStatus())
 	require.Equal(t, false, tp.pairStatus(kid1))
 
-	tp.checkTwinsProvidersPairStatus()
+	otn, mtn = tp.checkTwinsProvidersPairStatus()
+	require.Equal(t, 0, otn)
+	require.Equal(t, 1, mtn)
 	require.Equal(t, true, tw1.onlineStatus())
 	require.Equal(t, true, tp.pairStatus(kid1))
 

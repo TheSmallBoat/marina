@@ -44,8 +44,9 @@ func (tp *twinsPool) appendProviders(providers ...*twinServiceProvider) {
 	}
 }
 
-func (tp *twinsPool) checkTwinsProvidersPairStatus() {
-	var pNum = 0
+//return the number of offline-twins, the number of missed-twins
+func (tp *twinsPool) checkTwinsProvidersPairStatus() (int, int) {
+	var pNum, offlineTwinNum = 0, 0
 	for k, tw := range tp.mpt {
 		tp.mu.RLock()
 		_, exist := tp.mpp[k]
@@ -56,17 +57,21 @@ func (tp *twinsPool) checkTwinsProvidersPairStatus() {
 			if tw.onlineStatus() {
 				tw.turnToOffline()
 			}
+			offlineTwinNum++
 		} else {
 			pNum++
 		}
 	}
-	if pNum == len(tp.mpp) {
-		return
+
+	missedTwinNum := len(tp.mpp) - pNum
+	if missedTwinNum > 0 {
+		//  means some of providers haven't the pair twins.
+		for _, pd := range tp.mpp {
+			_ = tp.acquire((*pd).KadID())
+		}
 	}
-	// not equal means some of providers haven't the pair twins.
-	for _, pd := range tp.mpp {
-		_ = tp.acquire((*pd).KadID())
-	}
+
+	return offlineTwinNum, missedTwinNum
 }
 
 func (tp *twinsPool) pairStatus(peerNodeId *kademlia.ID) bool {
