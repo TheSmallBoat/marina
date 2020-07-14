@@ -3,7 +3,6 @@ package marina
 import (
 	"sync"
 
-	rpc "github.com/TheSmallBoat/carlo/streaming_rpc"
 	"github.com/lithdew/kademlia"
 )
 
@@ -12,7 +11,7 @@ type twinsPool struct {
 	sp sync.Pool
 
 	mpt map[kademlia.PublicKey]*twin
-	mpp map[kademlia.PublicKey]*rpc.Provider
+	mpp map[kademlia.PublicKey]*twinServiceProvider
 }
 
 func newTwinsPool() *twinsPool {
@@ -20,7 +19,7 @@ func newTwinsPool() *twinsPool {
 		mu:  sync.RWMutex{},
 		sp:  sync.Pool{},
 		mpt: make(map[kademlia.PublicKey]*twin),
-		mpp: make(map[kademlia.PublicKey]*rpc.Provider),
+		mpp: make(map[kademlia.PublicKey]*twinServiceProvider),
 	}
 }
 
@@ -29,6 +28,20 @@ func (tp *twinsPool) length() (int, int) {
 	defer tp.mu.RUnlock()
 
 	return len(tp.mpt), len(tp.mpp)
+}
+
+func (tp *twinsPool) appendProviders(providers ...*twinServiceProvider) {
+	for i := range providers {
+		kadId := (*providers[i]).KadID()
+		_, pExist := tp.existServiceProvider(kadId)
+		if !pExist {
+			tp.mu.Lock()
+			tp.mpp[kadId.Pub] = providers[i]
+			tp.mu.Unlock()
+		}
+		_ = tp.acquire(kadId)
+		// todo: twin run go routine task
+	}
 }
 
 func (tp *twinsPool) checkTwinsProvidersPairStatus() {
@@ -52,12 +65,12 @@ func (tp *twinsPool) checkTwinsProvidersPairStatus() {
 	}
 	// not equal means some of providers haven't the pair twins.
 	for _, pd := range tp.mpp {
-		_ = tp.acquire(pd.KadID())
+		_ = tp.acquire((*pd).KadID())
 	}
 }
 
 func (tp *twinsPool) pairStatus(peerNodeId *kademlia.ID) bool {
-	_, pExist := tp.existProvider(peerNodeId)
+	_, pExist := tp.existServiceProvider(peerNodeId)
 	tw, tExist := tp.existTwin(peerNodeId)
 	if pExist && tExist {
 		if !tw.onlineStatus() {
@@ -69,7 +82,7 @@ func (tp *twinsPool) pairStatus(peerNodeId *kademlia.ID) bool {
 	}
 }
 
-func (tp *twinsPool) existProvider(peerNodeId *kademlia.ID) (*rpc.Provider, bool) {
+func (tp *twinsPool) existServiceProvider(peerNodeId *kademlia.ID) (*twinServiceProvider, bool) {
 	tp.mu.RLock()
 	defer tp.mu.RUnlock()
 
