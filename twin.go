@@ -8,16 +8,16 @@ import (
 	"github.com/lithdew/kademlia"
 )
 
-const defaultTwinChannelSize = 32 // The default channel size for the twin
+const defaultTwinChannelSize = 32 // The default channel size for the twin.
 
 type twin struct {
-	kadId *kademlia.ID // the peer-node ID that equal to the remote peer-node
-	tc    chan []byte
+	kadId *kademlia.ID // The peer-node ID that equal to the remote peer-node.
+	tc    chan []byte  // The channel in the twin for receiving the data.
 
 	mu      sync.RWMutex
-	online  bool   // the flag about the activity of the peer-node twin, if true means that can work, otherwise cannot.
-	counter uint32 // the counter for the push operation while online.
-	offNum  uint32 // the counter for the push operation while offline.
+	online  bool   // The flag about the activity of the peer-node twin, if true means that can work, otherwise cannot.
+	counter uint32 // The counter for the push operation while online.
+	offNum  uint32 // The counter for the push operation while offline.
 }
 
 func newTwin(remotePeerNodeId *kademlia.ID) *twin {

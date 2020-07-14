@@ -10,6 +10,7 @@ type twinsPool struct {
 	mu sync.RWMutex
 	sp sync.Pool
 
+	// One remote service provider paired with one twin which own the same KadID.
 	mpt map[kademlia.PublicKey]*twin
 	mpp map[kademlia.PublicKey]*twinServiceProvider
 }
