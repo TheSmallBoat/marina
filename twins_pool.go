@@ -31,40 +31,82 @@ func (tp *twinsPool) length() (int, int) {
 	return len(tp.mpt), len(tp.mpp)
 }
 
-func (tp *twinsPool) exist(peerNodeId *kademlia.ID) (*twin, bool) {
+func (tp *twinsPool) checkTwinsProvidersPairStatus() {
+	var pNum = 0
+	for k, tw := range tp.mpt {
+		tp.mu.RLock()
+		_, exist := tp.mpp[k]
+		tp.mu.RUnlock()
+
+		if !exist {
+			// todo: some of them maybe release
+			if tw.onlineStatus() {
+				tw.turnToOffline()
+			}
+		} else {
+			pNum++
+		}
+	}
+	if pNum == len(tp.mpp) {
+		return
+	}
+	// not equal means some of providers haven't the pair twins.
+	for _, pd := range tp.mpp {
+		_ = tp.acquire(pd.KadID())
+	}
+}
+
+func (tp *twinsPool) pairStatus(peerNodeId *kademlia.ID) bool {
+	_, pExist := tp.existProvider(peerNodeId)
+	tw, tExist := tp.existTwin(peerNodeId)
+	if pExist && tExist {
+		if !tw.onlineStatus() {
+			tw.turnToOnline()
+		}
+		return true
+	} else {
+		return false
+	}
+}
+
+func (tp *twinsPool) existProvider(peerNodeId *kademlia.ID) (*rpc.Provider, bool) {
 	tp.mu.RLock()
 	defer tp.mu.RUnlock()
 
-	t, exist := tp.mpt[peerNodeId.Pub]
-	return t, exist
+	p, exist := tp.mpp[peerNodeId.Pub]
+	return p, exist
+}
+
+func (tp *twinsPool) existTwin(peerNodeId *kademlia.ID) (*twin, bool) {
+	tp.mu.RLock()
+	defer tp.mu.RUnlock()
+
+	tw, exist := tp.mpt[peerNodeId.Pub]
+	return tw, exist
 }
 
 func (tp *twinsPool) acquire(peerNodeId *kademlia.ID) *twin {
-	t, exist := tp.exist(peerNodeId)
+	tw, exist := tp.existTwin(peerNodeId)
 	if exist {
-		if !t.onlineStatus() {
-			t.turnToOnline()
+		if !tw.onlineStatus() {
+			tw.turnToOnline()
 		}
-		return t
+		return tw
 	}
 
-	tp.mu.RLock()
 	v := tp.sp.Get()
-	tp.mu.RUnlock()
-
 	if v == nil {
 		v = newTwin(peerNodeId)
 	} else {
 		v.(*twin).initWithOnline(peerNodeId)
 	}
-
-	t = v.(*twin)
+	tw = v.(*twin)
 
 	tp.mu.Lock()
-	tp.mpt[t.kadId.Pub] = t
+	tp.mpt[tw.kadId.Pub] = tw
 	tp.mu.Unlock()
 
-	return t
+	return tw
 }
 
 func (tp *twinsPool) release(t *twin) {

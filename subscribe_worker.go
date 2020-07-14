@@ -70,7 +70,7 @@ func processPeerNodeSubscribe(subW *subscribeWorker, kid *kademlia.ID, topic []b
 func processPeerNodeUnSubscribe(subW *subscribeWorker, kid *kademlia.ID, topic []byte) {
 	defer subW.wg.Done()
 
-	tw, exist := subW.twp.exist(kid)
+	tw, exist := subW.twp.existTwin(kid)
 	if exist {
 		err := subW.tt.EntityUnLink(topic, tw)
 		if err != nil {
