@@ -156,7 +156,7 @@ func TestPublishWorker(t *testing.T) {
 	require.Equal(t, uint32(2), twp.acquire(sKid).counter)
 }
 
-func TestPublishWorkerMultipleSubscribe(t *testing.T) {
+func TestPublishWorkerForMultipleSubscribe(t *testing.T) {
 	defer goleak.VerifyNone(t)
 
 	tt := cabinet.NewTopicTree()
@@ -213,7 +213,13 @@ func TestPublishWorkerMultipleSubscribe(t *testing.T) {
 	num := 0
 	for i := range entities {
 		tw := entities[i].(*twin)
-		if tw == twA || tw == twB || tw == twC {
+		if tw == twA {
+			num++
+		}
+		if tw == twB {
+			num++
+		}
+		if tw == twC {
 			num++
 		}
 	}
@@ -240,19 +246,52 @@ func TestPublishWorkerMultipleSubscribe(t *testing.T) {
 
 	dst := make([]byte, 0)
 	pkt.SetSubscriberKadId(sKidA)
-	pktByte, ok := twp.acquire(sKidA).PullMessagePacket()
-	require.Equal(t, true, ok)
-	require.Equal(t, pkt.AppendTo(dst), pktByte)
+	pktByteA, okA := twp.acquire(sKidA).PullMessagePacket()
+	require.Equal(t, true, okA)
+	require.Equal(t, pkt.AppendTo(dst), pktByteA)
+
+	pktA, err9 := UnmarshalMessagePacket(pktByteA)
+	require.NoError(t, err9)
+	// the pointer is not equal
+	require.Equal(t, pkt.mid, pktA.mid)
+	require.Equal(t, pkt.qos, pktA.qos)
+	require.Equal(t, pkt.topic, pktA.topic)
+	require.Equal(t, pkt.payLoad, pktA.payLoad)
+	require.Equal(t, pkt.pubKadId.Pub, pktA.pubKadId.Pub)
+	require.Equal(t, pkt.brkKadId.Pub, pktA.brkKadId.Pub)
+	require.Equal(t, pkt.subKadId.Pub, pktA.subKadId.Pub)
 
 	dst = dst[0:0]
 	pkt.SetSubscriberKadId(sKidB)
-	pktByte, ok = twp.acquire(sKidB).PullMessagePacket()
-	require.Equal(t, true, ok)
-	require.Equal(t, pkt.AppendTo(dst), pktByte)
+	pktByteB, okB := twp.acquire(sKidB).PullMessagePacket()
+	require.Equal(t, true, okB)
+	require.Equal(t, pkt.AppendTo(dst), pktByteB)
+
+	pktB, err10 := UnmarshalMessagePacket(pktByteB)
+	require.NoError(t, err10)
+	// the pointer is not equal
+	require.Equal(t, pkt.mid, pktB.mid)
+	require.Equal(t, pkt.qos, pktB.qos)
+	require.Equal(t, pkt.topic, pktB.topic)
+	require.Equal(t, pkt.payLoad, pktB.payLoad)
+	require.Equal(t, pkt.pubKadId.Pub, pktB.pubKadId.Pub)
+	require.Equal(t, pkt.brkKadId.Pub, pktB.brkKadId.Pub)
+	require.Equal(t, pkt.subKadId.Pub, pktB.subKadId.Pub)
 
 	dst = dst[0:0]
 	pkt.SetSubscriberKadId(sKidC)
-	pktByte, ok = twp.acquire(sKidC).PullMessagePacket()
-	require.Equal(t, true, ok)
-	require.Equal(t, pkt.AppendTo(dst), pktByte)
+	pktByteC, okC := twp.acquire(sKidC).PullMessagePacket()
+	require.Equal(t, true, okC)
+	require.Equal(t, pkt.AppendTo(dst), pktByteC)
+
+	pktC, err11 := UnmarshalMessagePacket(pktByteC)
+	require.NoError(t, err11)
+	// the pointer is not equal
+	require.Equal(t, pkt.mid, pktC.mid)
+	require.Equal(t, pkt.qos, pktC.qos)
+	require.Equal(t, pkt.topic, pktC.topic)
+	require.Equal(t, pkt.payLoad, pktC.payLoad)
+	require.Equal(t, pkt.pubKadId.Pub, pktC.pubKadId.Pub)
+	require.Equal(t, pkt.brkKadId.Pub, pktC.brkKadId.Pub)
+	require.Equal(t, pkt.subKadId.Pub, pktC.subKadId.Pub)
 }
