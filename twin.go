@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sync"
 	"sync/atomic"
+	"time"
 )
 
 const defaultTwinChannelSize = 32 // The default channel size for the twin.
@@ -14,8 +15,10 @@ type twin struct {
 	tc   chan []byte   // The channel in the twin for receiving the data.
 	exit chan struct{} // The channel in the twin for the exit signal of the task.
 
-	mu          sync.RWMutex
-	online      bool   // The flag about the activity of the peer-node twin, if true means that can work, otherwise cannot.
+	mu     sync.RWMutex
+	online bool      // The flag about the activity of the peer-node twin, if true means that can work, otherwise cannot.
+	scTime time.Time // The change time of the online/offline status.
+
 	pushSucNum  uint32 // The counter for the pushing operation while online.
 	pushErrNum  uint32 // The counter for the pushing operation while offline.
 	transSucNum uint32 // the success count of the transmitting data operation
@@ -72,6 +75,7 @@ func (t *twin) turnToOffline() {
 
 	t.exit <- struct{}{}
 	t.online = false
+	t.scTime = time.Now()
 }
 
 func (t *twin) turnToOnline() {
@@ -79,6 +83,7 @@ func (t *twin) turnToOnline() {
 	defer t.mu.Unlock()
 
 	t.online = true
+	t.scTime = time.Now()
 	t.executeTask()
 }
 

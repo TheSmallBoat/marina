@@ -1,11 +1,14 @@
 package marina
 
 import (
-	"github.com/lithdew/kademlia"
 	"sync"
+	"time"
+
+	"github.com/lithdew/kademlia"
 )
 
 const defaultMaxTwinWorkers = 32
+const defaultMaxTwinOfflineTimeDuration = time.Duration(5 * time.Minute)
 
 type twinsPool struct {
 	mu sync.RWMutex
@@ -59,14 +62,18 @@ func (tp *twinsPool) checkTwinsProvidersPairStatus() (int, int) {
 		_, exist := tp.mpp[k]
 		tp.mu.RUnlock()
 
-		if !exist {
+		if exist {
+			pNum++
+		} else {
+			offlineTwinNum++
 			if tw.onlineStatus() {
 				tw.turnToOffline()
+			} else {
+				// Releasing the twin that has been offline for too long.
+				if time.Since(tw.scTime) > defaultMaxTwinOfflineTimeDuration {
+					tp.release(tw)
+				}
 			}
-			// todo: some of them maybe release, need to check expire time first.
-			offlineTwinNum++
-		} else {
-			pNum++
 		}
 	}
 
@@ -81,6 +88,7 @@ func (tp *twinsPool) checkTwinsProvidersPairStatus() (int, int) {
 	return offlineTwinNum, missedTwinNum
 }
 
+/*
 func (tp *twinsPool) pairStatus(pub kademlia.PublicKey) bool {
 	_, pExist := tp.existServiceProvider(pub)
 	tw, tExist := tp.existTwin(pub)
@@ -92,7 +100,7 @@ func (tp *twinsPool) pairStatus(pub kademlia.PublicKey) bool {
 	} else {
 		return false
 	}
-}
+}*/
 
 func (tp *twinsPool) existServiceProvider(pubK kademlia.PublicKey) (*twinServiceProvider, bool) {
 	tp.mu.RLock()
