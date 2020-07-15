@@ -74,12 +74,13 @@ func forwardMessagePacket(pubW *publishWorker, pkt *MessagePacket) {
 		return
 	}
 
+	dst := make([]byte, 0)
 	for _, v := range entities {
 		tw := v.(*twin)
 		if tw != nil {
 			pkt.SetSubscriberKadId(tw.kadId)
 
-			dst := make([]byte, 0)
+			dst = dst[0:0]
 			err := tw.PushMessagePacket(pkt.AppendTo(dst))
 			if err != nil {
 				atomic.AddUint32(&pubW.fwdErrNum, uint32(1))

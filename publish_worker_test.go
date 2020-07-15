@@ -155,3 +155,104 @@ func TestPublishWorker(t *testing.T) {
 	// Still equal 2 due to the failure of pushing
 	require.Equal(t, uint32(2), twp.acquire(sKid).counter)
 }
+
+func TestPublishWorkerMultipleSubscribe(t *testing.T) {
+	defer goleak.VerifyNone(t)
+
+	tt := cabinet.NewTopicTree()
+	defer func() {
+		err := tt.Close()
+		require.NoError(t, err)
+	}()
+
+	pKid, err1 := generateKadId()
+	require.NoError(t, err1)
+	bKid, err2 := generateKadId()
+	require.NoError(t, err2)
+	sKidA, err3 := generateKadId()
+	require.NoError(t, err3)
+	sKidB, err4 := generateKadId()
+	require.NoError(t, err4)
+	sKidC, err5 := generateKadId()
+	require.NoError(t, err5)
+
+	twp := newTwinsPool()
+	twn, pdn := twp.length()
+	require.Equal(t, 0, twn)
+	require.Equal(t, 0, len(twp.mpt))
+	require.Equal(t, 0, pdn)
+	require.Equal(t, 0, len(twp.mpp))
+	require.Empty(t, twp.mpt)
+	require.Empty(t, twp.mpp)
+
+	twA := twp.acquire(sKidA)
+	err6 := tt.EntityLink([]byte("/finance/tom"), twA)
+	require.NoError(t, err6)
+	require.Equal(t, sKidA, twA.kadId)
+	require.Equal(t, true, twA.online)
+
+	twB := twp.acquire(sKidB)
+	err7 := tt.EntityLink([]byte("/finance/tom"), twB)
+	require.NoError(t, err7)
+	require.Equal(t, sKidB, twB.kadId)
+	require.Equal(t, true, twB.online)
+
+	twC := twp.acquire(sKidC)
+	err8 := tt.EntityLink([]byte("/finance/tom"), twC)
+	require.NoError(t, err8)
+	require.Equal(t, sKidC, twC.kadId)
+	require.Equal(t, true, twC.online)
+
+	pw := NewPublishWorker(bKid, tt)
+	defer pw.Close()
+
+	entities := make([]interface{}, 0)
+	entities = pw.EntitiesFor([]byte("/finance/tom"))
+	require.Equal(t, 3, len(entities))
+
+	num := 0
+	for i := range entities {
+		tw := entities[i].(*twin)
+		if tw == twA || tw == twB || tw == twC {
+			num++
+		}
+	}
+	require.Equal(t, 3, num)
+
+	pkt := NewMessagePacket(pKid, uint32(88), byte(0), []byte("/finance/tom"), []byte("xyz123456abc"))
+	pw.WorkFor(pkt)
+	pw.Wait()
+
+	require.Equal(t, uint32(1), twp.acquire(sKidA).counter)
+	require.Equal(t, uint32(1), twp.acquire(sKidB).counter)
+	require.Equal(t, uint32(1), twp.acquire(sKidC).counter)
+
+	require.Equal(t, uint32(1), pw.pubSucNum)
+	require.Equal(t, uint32(3), pw.fwdSucNum)
+	require.Equal(t, uint32(0), pw.pubErrNum)
+	require.Equal(t, uint32(0), pw.fwdErrNum)
+
+	require.Equal(t, pKid, pkt.pubKadId)
+	require.Equal(t, bKid, pkt.brkKadId)
+
+	flag := pkt.subKadId == sKidA || pkt.subKadId == sKidB || pkt.subKadId == sKidC
+	require.Equal(t, true, flag)
+
+	dst := make([]byte, 0)
+	pkt.SetSubscriberKadId(sKidA)
+	pktByte, ok := twp.acquire(sKidA).PullMessagePacket()
+	require.Equal(t, true, ok)
+	require.Equal(t, pkt.AppendTo(dst), pktByte)
+
+	dst = dst[0:0]
+	pkt.SetSubscriberKadId(sKidB)
+	pktByte, ok = twp.acquire(sKidB).PullMessagePacket()
+	require.Equal(t, true, ok)
+	require.Equal(t, pkt.AppendTo(dst), pktByte)
+
+	dst = dst[0:0]
+	pkt.SetSubscriberKadId(sKidC)
+	pktByte, ok = twp.acquire(sKidC).PullMessagePacket()
+	require.Equal(t, true, ok)
+	require.Equal(t, pkt.AppendTo(dst), pktByte)
+}
