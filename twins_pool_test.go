@@ -19,6 +19,10 @@ func (p *provider) KadID() *kademlia.ID {
 	return p.kadId
 }
 
+func (p *provider) Push(data []byte) error {
+	return nil
+}
+
 func generateKadId() (*kademlia.ID, error) {
 	sk := sr.GenerateSecretKey()
 	addr, err := net.ResolveTCPAddr("tcp", ":9000")
@@ -91,35 +95,35 @@ func TestTwinsPool(t *testing.T) {
 	require.Equal(t, uint32(0), tw1.counter)
 	require.Equal(t, uint32(0), tw1.offNum)
 	require.Equal(t, true, tw1.online)
-	require.NoError(t, tw1.PushMessagePacketToChannel([]byte("hello,world")))
+	require.NoError(t, tw1.pushMessagePacketToChannel([]byte("hello,world")))
 	require.Equal(t, uint32(1), tw1.counter)
 	require.Equal(t, uint32(0), tw1.offNum)
 
-	b, ok := tw1.PullMessagePacketFromChannel()
+	b, ok := tw1.pullMessagePacketFromChannel()
 	require.Equal(t, true, ok)
 	require.Equal(t, []byte("hello,world"), b)
 
 	tw1.turnToOffline()
 	require.Equal(t, false, tw1.online)
-	require.Error(t, tw1.PushMessagePacketToChannel([]byte("hello,world.")))
+	require.Error(t, tw1.pushMessagePacketToChannel([]byte("hello,world.")))
 	require.Equal(t, uint32(1), tw1.counter)
 	require.Equal(t, uint32(1), tw1.offNum)
 	require.Equal(t, true, tp.pairStatus(kid1))
 
 	tw1.turnToOnline()
 	require.Equal(t, true, tw1.online)
-	require.NoError(t, tw1.PushMessagePacketToChannel([]byte("hello,world..")))
+	require.NoError(t, tw1.pushMessagePacketToChannel([]byte("hello,world..")))
 	require.Equal(t, uint32(2), tw1.counter)
 	require.Equal(t, uint32(1), tw1.offNum)
 	require.Equal(t, true, tp.pairStatus(kid1))
 
-	b, ok = tw1.PullMessagePacketFromChannel()
+	b, ok = tw1.pullMessagePacketFromChannel()
 	require.Equal(t, true, ok)
 	require.Equal(t, []byte("hello,world.."), b)
 
-	tw1.setOnlineStatus(false)
+	tw1.turnToOffline()
 	require.Equal(t, false, tw1.online)
-	require.Error(t, tw1.PushMessagePacketToChannel([]byte("hello,world...")))
+	require.Error(t, tw1.pushMessagePacketToChannel([]byte("hello,world...")))
 	require.Equal(t, uint32(2), tw1.counter)
 	require.Equal(t, uint32(2), tw1.offNum)
 	require.Equal(t, true, tp.pairStatus(kid1))
@@ -167,11 +171,11 @@ func TestTwinsPool(t *testing.T) {
 	require.Equal(t, true, tp.pairStatus(kid1))
 	require.Equal(t, false, tp.pairStatus(kid2))
 
-	require.NoError(t, tw2.PushMessagePacketToChannel([]byte("hello,world....")))
+	require.NoError(t, tw2.pushMessagePacketToChannel([]byte("hello,world....")))
 	require.Equal(t, uint32(1), tw2.counter)
 	require.Equal(t, uint32(0), tw2.offNum)
 
-	b2, ok2 := tw2.PullMessagePacketFromChannel()
+	b2, ok2 := tw2.pullMessagePacketFromChannel()
 	require.Equal(t, true, ok2)
 	require.Equal(t, []byte("hello,world...."), b2)
 
@@ -180,7 +184,7 @@ func TestTwinsPool(t *testing.T) {
 	require.Equal(t, false, tw2.onlineStatus())
 
 	require.Equal(t, false, tw2.online)
-	require.Error(t, tw2.PushMessagePacketToChannel([]byte("hello,world......")))
+	require.Error(t, tw2.pushMessagePacketToChannel([]byte("hello,world......")))
 	require.Equal(t, uint32(1), tw2.counter)
 	require.Equal(t, uint32(1), tw2.offNum)
 
@@ -233,11 +237,11 @@ func BenchmarkTwinsPool(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		err := tw.PushMessagePacketToChannel(buf)
+		err := tw.pushMessagePacketToChannel(buf)
 		if err != nil {
 			b.Fatal(err)
 		}
-		tw.PullMessagePacketFromChannel()
+		tw.pullMessagePacketFromChannel()
 	}
 
 	tp.release(tw)
@@ -245,10 +249,10 @@ func BenchmarkTwinsPool(b *testing.B) {
 
 	tw2 := tp.acquire(kid)
 	for i := 0; i < b.N; i++ {
-		err := tw2.PushMessagePacketToChannel(buf)
+		err := tw2.pushMessagePacketToChannel(buf)
 		if err != nil {
 			b.Fatal(err)
 		}
-		tw2.PullMessagePacketFromChannel()
+		tw2.pullMessagePacketFromChannel()
 	}
 }

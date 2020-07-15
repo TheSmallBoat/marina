@@ -16,10 +16,10 @@ type publishWorker struct {
 	tt    *cabinet.TTree
 	kadId *kademlia.ID //the broker-peer-node kadID
 
-	pubSucNum uint32 // the success number of the publishing operation
-	pubErrNum uint32 // the error number of the publishing operation
-	fwdSucNum uint32 // the success number of the forwarding operation
-	fwdErrNum uint32 // the error number of the forwarding operation
+	pubSucNum uint32 // the success count of the publishing operation
+	pubErrNum uint32 // the error count of the publishing operation
+	fwdSucNum uint32 // the success count of the forwarding operation
+	fwdErrNum uint32 // the error count of the forwarding operation
 
 	wg sync.WaitGroup
 }
@@ -78,10 +78,10 @@ func forwardMessagePacket(pubW *publishWorker, pkt *MessagePacket) {
 	for _, v := range entities {
 		tw := v.(*twin)
 		if tw != nil {
-			pkt.SetSubscriberKadId(tw.kadId)
+			pkt.SetSubscriberKadId((*tw.prd).KadID())
 
 			dst = dst[0:0]
-			err := tw.PushMessagePacketToChannel(pkt.AppendTo(dst))
+			err := tw.pushMessagePacketToChannel(pkt.AppendTo(dst))
 			if err != nil {
 				atomic.AddUint32(&pubW.fwdErrNum, uint32(1))
 			} else {

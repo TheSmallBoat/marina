@@ -72,7 +72,7 @@ func TestPublishWorker(t *testing.T) {
 	require.Equal(t, sKid, pkt.subKadId)
 
 	dst := make([]byte, 0)
-	pktByte, ok := twp.acquire(sKid).PullMessagePacketFromChannel()
+	pktByte, ok := twp.acquire(sKid).pullMessagePacketFromChannel()
 	require.Equal(t, true, ok)
 	require.Equal(t, pkt.AppendTo(dst), pktByte)
 
@@ -114,7 +114,7 @@ func TestPublishWorker(t *testing.T) {
 	require.Equal(t, sKid, pkt.subKadId)
 
 	dst = make([]byte, 0)
-	pktByte, ok = twp.acquire(sKid).PullMessagePacketFromChannel()
+	pktByte, ok = twp.acquire(sKid).pullMessagePacketFromChannel()
 	require.Equal(t, true, ok)
 	require.Equal(t, pkt.AppendTo(dst), pktByte)
 
@@ -246,7 +246,7 @@ func TestPublishWorkerForMultipleSubscribe(t *testing.T) {
 
 	dst := make([]byte, 0)
 	pkt.SetSubscriberKadId(sKidA)
-	pktByteA, okA := twp.acquire(sKidA).PullMessagePacketFromChannel()
+	pktByteA, okA := twp.acquire(sKidA).pullMessagePacketFromChannel()
 	require.Equal(t, true, okA)
 	require.Equal(t, pkt.AppendTo(dst), pktByteA)
 
@@ -263,7 +263,7 @@ func TestPublishWorkerForMultipleSubscribe(t *testing.T) {
 
 	dst = dst[0:0]
 	pkt.SetSubscriberKadId(sKidB)
-	pktByteB, okB := twp.acquire(sKidB).PullMessagePacketFromChannel()
+	pktByteB, okB := twp.acquire(sKidB).pullMessagePacketFromChannel()
 	require.Equal(t, true, okB)
 	require.Equal(t, pkt.AppendTo(dst), pktByteB)
 
@@ -280,7 +280,7 @@ func TestPublishWorkerForMultipleSubscribe(t *testing.T) {
 
 	dst = dst[0:0]
 	pkt.SetSubscriberKadId(sKidC)
-	pktByteC, okC := twp.acquire(sKidC).PullMessagePacketFromChannel()
+	pktByteC, okC := twp.acquire(sKidC).pullMessagePacketFromChannel()
 	require.Equal(t, true, okC)
 	require.Equal(t, pkt.AppendTo(dst), pktByteC)
 

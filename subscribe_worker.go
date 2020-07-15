@@ -16,10 +16,10 @@ type subscribeWorker struct {
 	twp *twinsPool
 	tt  *cabinet.TTree
 
-	subSucNum   uint32 // the success number of the subscribing operation
-	subErrNum   uint32 // the error number of the subscribing operation
-	unSubSucNum uint32 // the success number of the unsubscribing operation
-	unSubErrNum uint32 // the error number of the unsubscribing operation
+	subSucNum   uint32 // the success count of the subscribing operation
+	subErrNum   uint32 // the error count of the subscribing operation
+	unSubSucNum uint32 // the success count of the unsubscribing operation
+	unSubErrNum uint32 // the error count of the unsubscribing operation
 
 	wg sync.WaitGroup
 }
@@ -37,28 +37,28 @@ func NewSubscribeWorker(twp *twinsPool, tTree *cabinet.TTree) *subscribeWorker {
 }
 
 // kid : the subscribe-peer-node kadId
-func (s *subscribeWorker) peerNodeSubscribe(kid *kademlia.ID, qos byte, topic []byte) {
+func (s *subscribeWorker) peerNodeSubscribe(prd *twinServiceProvider, qos byte, topic []byte) {
 	if qos == byte(1) {
 		// Todo:process response
 	}
 	s.wg.Add(1)
-	s.tp.SubmitTask(func() { processPeerNodeSubscribe(s, kid, topic) })
+	s.tp.SubmitTask(func() { processPeerNodeSubscribe(s, prd, topic) })
 }
 
-func (s *subscribeWorker) peerNodeUnSubscribe(kid *kademlia.ID, qos byte, topic []byte) {
+func (s *subscribeWorker) peerNodeUnSubscribe(pubK kademlia.PublicKey, qos byte, topic []byte) {
 	if qos == byte(1) {
 		// Todo:process response
 	}
 
 	s.wg.Add(1)
-	s.tp.SubmitTask(func() { processPeerNodeUnSubscribe(s, kid, topic) })
+	s.tp.SubmitTask(func() { processPeerNodeUnSubscribe(s, pubK, topic) })
 }
 
 // To link the twin for the peer-node to this topic
-func processPeerNodeSubscribe(subW *subscribeWorker, kid *kademlia.ID, topic []byte) {
+func processPeerNodeSubscribe(subW *subscribeWorker, prd *twinServiceProvider, topic []byte) {
 	defer subW.wg.Done()
 
-	err := subW.tt.EntityLink(topic, subW.twp.acquire(kid))
+	err := subW.tt.EntityLink(topic, subW.twp.acquire(prd))
 	if err != nil {
 		atomic.AddUint32(&subW.subErrNum, uint32(1))
 	} else {
@@ -67,10 +67,10 @@ func processPeerNodeSubscribe(subW *subscribeWorker, kid *kademlia.ID, topic []b
 }
 
 // To unlink the twin for the peer-node to this topic
-func processPeerNodeUnSubscribe(subW *subscribeWorker, kid *kademlia.ID, topic []byte) {
+func processPeerNodeUnSubscribe(subW *subscribeWorker, pubK kademlia.PublicKey, topic []byte) {
 	defer subW.wg.Done()
 
-	tw, exist := subW.twp.existTwin(kid)
+	tw, exist := subW.twp.existTwin(pubK)
 	if exist {
 		err := subW.tt.EntityUnLink(topic, tw)
 		if err != nil {
