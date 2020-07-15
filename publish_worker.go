@@ -81,7 +81,7 @@ func forwardMessagePacket(pubW *publishWorker, pkt *MessagePacket) {
 			pkt.SetSubscriberKadId(tw.kadId)
 
 			dst = dst[0:0]
-			err := tw.PushMessagePacket(pkt.AppendTo(dst))
+			err := tw.PushMessagePacketToChannel(pkt.AppendTo(dst))
 			if err != nil {
 				atomic.AddUint32(&pubW.fwdErrNum, uint32(1))
 			} else {

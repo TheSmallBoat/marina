@@ -38,7 +38,7 @@ func (t *twin) onlineStatus() bool {
 	return t.online
 }
 
-func (t *twin) PushMessagePacket(pkt []byte) error {
+func (t *twin) PushMessagePacketToChannel(pkt []byte) error {
 	if !t.onlineStatus() {
 		//maybe need to cache the pkt.
 
@@ -52,7 +52,7 @@ func (t *twin) PushMessagePacket(pkt []byte) error {
 	return nil
 }
 
-func (t *twin) PullMessagePacket() ([]byte, bool) {
+func (t *twin) PullMessagePacketFromChannel() ([]byte, bool) {
 	pkt, ok := <-t.tc
 	return pkt, ok
 }
