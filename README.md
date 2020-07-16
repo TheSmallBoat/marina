@@ -1,22 +1,42 @@
 # marina
-A streaming-hub micro-service over the peer-mesh network that implements streaming publish-subscribe mechanism base on topics.
+An abstract library that implements a topic-based publish/subscribe mechanism, 
+and using the concept of the digital twins that include the interfaces to bind remote service providers, 
+achieves decoupling from specific network protocol libraries.
 
-## modules
-1. The twins-tunnel module is a tunnel that pair by the peer-nodes, the local twin is the mirror of the remote twin,
- and the worker will unconditional push the packets to the remote twin pool from the local continually.
- While the remote twin got the packets, it will process according to consumers or cache those packets. 
- The role of the local twin pool is to gather all the packets that meet the requirements together and
-  push them through a stream channel.
- 
-2. The topic-manager module is a manager to pickup the packet group by topics from a pool of the publisher,
- and match the subscribers to find the local twin mirror and then put those packets to the local twin pool. 
- 
-3. The publisher module is a pool to receive the packets continually, but it isn't the twin pool,
- those packets come from the producers.
- 
-4. The subscriber module is a pool to receive the request of subscribing and build the local twin for the peer-node.
+## Little dependencies
+1. github.com/TheSmallBoat/cabinet (Using the tree-structure topics manager.)
+2. github.com/lithdew/kademlia (Used for the twin‘s identity, cause support the distributed system.)
+3. github.com/lithdew/bytesutil (Used for the binary codec.)
+4. github.com/stretchr/testify (Used in testing.)
+5. go.uber.org/goleak (Used in testing.)
 
-5. The worker pool have some channels to execute the asynchronous task on the background.
+```
+% sysctl -a | grep machdep.cpu | grep 'brand_'
+machdep.cpu.brand_string: Intel(R) Core(TM) i5-7267U CPU @ 3.10GHz
 
-6. The micro-service of the streaming-hub owns the above modules and build the peer-mesh network by discovering the service name.
- Maybe have publisher service, subscribe service and twin-tunnel service.
+% go test . -cover -v
+=== RUN   TestPacket
+--- PASS: TestPacket (0.00s)
+=== RUN   TestPublishWorker
+--- PASS: TestPublishWorker (0.01s)
+=== RUN   TestPublishWorkerForMultipleSubscribe
+--- PASS: TestPublishWorkerForMultipleSubscribe (0.01s)
+=== RUN   TestSubscribeWorker
+--- PASS: TestSubscribeWorker (0.00s)
+=== RUN   TestTaskPool
+--- PASS: TestTaskPool (0.00s)
+=== RUN   TestTwinsPool
+--- PASS: TestTwinsPool (0.02s)
+PASS
+coverage: 100.0% of statements
+ok      github.com/TheSmallBoat/marina  0.138s  coverage: 100.0% of statements
+
+% go test -bench=. -benchtime=10s
+goos: darwin
+goarch: amd64
+pkg: github.com/TheSmallBoat/marina
+BenchmarkTaskPool-4     34860289               348 ns/op               0 B/op          0 allocs/op
+BenchmarkTwinsPool-4    19888471               599 ns/op        2336.85 MB/s          40 B/op          3 allocs/op
+PASS
+ok      github.com/TheSmallBoat/marina  25.257s
+```
