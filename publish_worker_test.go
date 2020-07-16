@@ -2,6 +2,7 @@ package marina
 
 import (
 	"testing"
+	"time"
 
 	"github.com/TheSmallBoat/cabinet"
 	"github.com/stretchr/testify/require"
@@ -25,6 +26,8 @@ func TestPublishWorker(t *testing.T) {
 	require.NoError(t, err3)
 
 	twp := newTwinsPool()
+	defer twp.close()
+
 	twn, pdn := twp.length()
 	require.Equal(t, 0, twn)
 	require.Equal(t, 0, len(twp.mpt))
@@ -32,10 +35,13 @@ func TestPublishWorker(t *testing.T) {
 	require.Equal(t, 0, len(twp.mpp))
 	require.Empty(t, twp.mpt)
 
-	tw := twp.acquire(sKid)
+	var prd twinServiceProvider = &provider{kadId: sKid}
+	require.Equal(t, sKid, prd.KadID())
+
+	tw := twp.acquire(&prd)
 	err4 := tt.EntityLink([]byte("/finance/tom"), tw)
 	require.NoError(t, err4)
-	require.Equal(t, sKid, tw.kadId)
+	require.Equal(t, sKid, (*tw.prd).KadID())
 	require.Equal(t, true, tw.online)
 
 	pw := NewPublishWorker(bKid, tt)
@@ -60,7 +66,7 @@ func TestPublishWorker(t *testing.T) {
 	pw.WorkFor(pkt)
 	pw.Wait()
 
-	require.Equal(t, uint32(1), twp.acquire(sKid).counter)
+	require.Equal(t, uint32(1), twp.acquire(&prd).pushSucNum)
 
 	require.Equal(t, uint32(1), pw.pubSucNum)
 	require.Equal(t, uint32(1), pw.fwdSucNum)
@@ -71,23 +77,13 @@ func TestPublishWorker(t *testing.T) {
 	require.Equal(t, bKid, pkt.brkKadId)
 	require.Equal(t, sKid, pkt.subKadId)
 
+	time.Sleep(5 * time.Millisecond)
+
+	require.Equal(t, uint32(1), twp.acquire(&prd).transSucNum+twp.acquire(&prd).transErrNum)
+
 	dst := make([]byte, 0)
-	pktByte, ok := twp.acquire(sKid).pullMessagePacketFromChannel()
-	require.Equal(t, true, ok)
-	require.Equal(t, pkt.AppendTo(dst), pktByte)
-
-	pkt_, err5 := UnmarshalMessagePacket(pktByte)
-	require.NoError(t, err5)
-	// the pointer is not equal
-	require.Equal(t, pkt.mid, pkt_.mid)
-	require.Equal(t, pkt.qos, pkt_.qos)
-	require.Equal(t, pkt.topic, pkt_.topic)
-	require.Equal(t, pkt.payLoad, pkt_.payLoad)
-
-	dst = make([]byte, 0)
-	require.Equal(t, pkt.pubKadId.AppendTo(dst), pkt_.pubKadId.AppendTo(dst))
-	require.Equal(t, pkt.brkKadId.AppendTo(dst), pkt_.brkKadId.AppendTo(dst))
-	require.Equal(t, pkt.subKadId.AppendTo(dst), pkt_.subKadId.AppendTo(dst))
+	pkt.SetSubscriberKadId(sKid)
+	require.Equal(t, uint64(len(pkt.AppendTo(dst))), twp.acquire(&prd).transSucSize+twp.acquire(&prd).transErrSize)
 
 	pkt = NewMessagePacket(pKid, uint32(89), byte(0), []byte("/finance/jack"), []byte("xyz123456abc"))
 	pw.WorkFor(pkt)
@@ -102,7 +98,7 @@ func TestPublishWorker(t *testing.T) {
 	pw.WorkFor(pkt)
 	pw.Wait()
 
-	require.Equal(t, uint32(2), twp.acquire(sKid).counter)
+	require.Equal(t, uint32(2), twp.acquire(&prd).pushSucNum)
 
 	require.Equal(t, uint32(2), pw.pubSucNum)
 	require.Equal(t, uint32(2), pw.fwdSucNum)
@@ -113,17 +109,12 @@ func TestPublishWorker(t *testing.T) {
 	require.Equal(t, bKid, pkt.brkKadId)
 	require.Equal(t, sKid, pkt.subKadId)
 
-	dst = make([]byte, 0)
-	pktByte, ok = twp.acquire(sKid).pullMessagePacketFromChannel()
-	require.Equal(t, true, ok)
-	require.Equal(t, pkt.AppendTo(dst), pktByte)
-
 	err6 := tt.LinkedEntities([]byte("/finance/tom"), &entities)
 	require.NoError(t, err6)
 	require.Equal(t, 1, len(entities))
 	twe := entities[0].(*twin)
 	require.Equal(t, tw, twe)
-	require.Equal(t, twp.acquire(sKid), twe)
+	require.Equal(t, twp.acquire(&prd), twe)
 	require.Equal(t, true, tw.online)
 	require.Equal(t, true, twe.online)
 
@@ -140,7 +131,7 @@ func TestPublishWorker(t *testing.T) {
 	require.Equal(t, uint32(1), pw.pubErrNum)
 	require.Equal(t, uint32(1), pw.fwdErrNum)
 
-	err7 := tt.EntityUnLink([]byte("/finance/tom"), twp.acquire(sKid))
+	err7 := tt.EntityUnLink([]byte("/finance/tom"), twp.acquire(&prd))
 	require.NoError(t, err7)
 
 	pkt = NewMessagePacket(pKid, uint32(92), byte(1), []byte("/finance/tom"), []byte("123456abc"))
@@ -153,7 +144,7 @@ func TestPublishWorker(t *testing.T) {
 	require.Equal(t, uint32(1), pw.fwdErrNum)
 
 	// Still equal 2 due to the failure of pushing
-	require.Equal(t, uint32(2), twp.acquire(sKid).counter)
+	require.Equal(t, uint32(2), twp.acquire(&prd).pushSucNum)
 }
 
 func TestPublishWorkerForMultipleSubscribe(t *testing.T) {
@@ -169,6 +160,7 @@ func TestPublishWorkerForMultipleSubscribe(t *testing.T) {
 	require.NoError(t, err1)
 	bKid, err2 := generateKadId()
 	require.NoError(t, err2)
+
 	sKidA, err3 := generateKadId()
 	require.NoError(t, err3)
 	sKidB, err4 := generateKadId()
@@ -177,6 +169,8 @@ func TestPublishWorkerForMultipleSubscribe(t *testing.T) {
 	require.NoError(t, err5)
 
 	twp := newTwinsPool()
+	defer twp.close()
+
 	twn, pdn := twp.length()
 	require.Equal(t, 0, twn)
 	require.Equal(t, 0, len(twp.mpt))
@@ -185,22 +179,34 @@ func TestPublishWorkerForMultipleSubscribe(t *testing.T) {
 	require.Empty(t, twp.mpt)
 	require.Empty(t, twp.mpp)
 
-	twA := twp.acquire(sKidA)
+	// section A:
+	var prdA twinServiceProvider = &provider{kadId: sKidA}
+	require.Equal(t, sKidA, prdA.KadID())
+
+	twA := twp.acquire(&prdA)
 	err6 := tt.EntityLink([]byte("/finance/tom"), twA)
 	require.NoError(t, err6)
-	require.Equal(t, sKidA, twA.kadId)
+	require.Equal(t, sKidA, (*twA.prd).KadID())
 	require.Equal(t, true, twA.online)
 
-	twB := twp.acquire(sKidB)
+	// section B:
+	var prdB twinServiceProvider = &provider{kadId: sKidB}
+	require.Equal(t, sKidB, prdB.KadID())
+
+	twB := twp.acquire(&prdB)
 	err7 := tt.EntityLink([]byte("/finance/tom"), twB)
 	require.NoError(t, err7)
-	require.Equal(t, sKidB, twB.kadId)
+	require.Equal(t, sKidB, (*twB.prd).KadID())
 	require.Equal(t, true, twB.online)
 
-	twC := twp.acquire(sKidC)
+	// section C:
+	var prdC twinServiceProvider = &provider{kadId: sKidC}
+	require.Equal(t, sKidC, prdC.KadID())
+
+	twC := twp.acquire(&prdC)
 	err8 := tt.EntityLink([]byte("/finance/tom"), twC)
 	require.NoError(t, err8)
-	require.Equal(t, sKidC, twC.kadId)
+	require.Equal(t, sKidC, (*twC.prd).KadID())
 	require.Equal(t, true, twC.online)
 
 	pw := NewPublishWorker(bKid, tt)
@@ -225,13 +231,13 @@ func TestPublishWorkerForMultipleSubscribe(t *testing.T) {
 	}
 	require.Equal(t, 3, num)
 
-	pkt := NewMessagePacket(pKid, uint32(88), byte(0), []byte("/finance/tom"), []byte("xyz123456abc"))
+	pkt := NewMessagePacket(pKid, uint32(888), byte(0), []byte("/finance/tom"), []byte("xyz123456abc"))
 	pw.WorkFor(pkt)
 	pw.Wait()
 
-	require.Equal(t, uint32(1), twp.acquire(sKidA).counter)
-	require.Equal(t, uint32(1), twp.acquire(sKidB).counter)
-	require.Equal(t, uint32(1), twp.acquire(sKidC).counter)
+	require.Equal(t, uint32(1), twp.acquire(&prdA).pushSucNum)
+	require.Equal(t, uint32(1), twp.acquire(&prdB).pushSucNum)
+	require.Equal(t, uint32(1), twp.acquire(&prdC).pushSucNum)
 
 	require.Equal(t, uint32(1), pw.pubSucNum)
 	require.Equal(t, uint32(3), pw.fwdSucNum)
@@ -244,54 +250,25 @@ func TestPublishWorkerForMultipleSubscribe(t *testing.T) {
 	flag := pkt.subKadId == sKidA || pkt.subKadId == sKidB || pkt.subKadId == sKidC
 	require.Equal(t, true, flag)
 
+	time.Sleep(5 * time.Millisecond)
+
+	require.Equal(t, uint32(1), twp.acquire(&prdA).transSucNum+twp.acquire(&prdA).transErrNum)
+	require.Equal(t, uint32(1), twp.acquire(&prdB).transSucNum+twp.acquire(&prdB).transErrNum)
+	require.Equal(t, uint32(1), twp.acquire(&prdC).transSucNum+twp.acquire(&prdB).transErrNum)
+
+	// section A:
 	dst := make([]byte, 0)
 	pkt.SetSubscriberKadId(sKidA)
-	pktByteA, okA := twp.acquire(sKidA).pullMessagePacketFromChannel()
-	require.Equal(t, true, okA)
-	require.Equal(t, pkt.AppendTo(dst), pktByteA)
+	require.Equal(t, uint64(len(pkt.AppendTo(dst))), twp.acquire(&prdA).transSucSize+twp.acquire(&prdA).transErrSize)
 
-	pktA, err9 := UnmarshalMessagePacket(pktByteA)
-	require.NoError(t, err9)
-	// the pointer is not equal
-	require.Equal(t, pkt.mid, pktA.mid)
-	require.Equal(t, pkt.qos, pktA.qos)
-	require.Equal(t, pkt.topic, pktA.topic)
-	require.Equal(t, pkt.payLoad, pktA.payLoad)
-	require.Equal(t, pkt.pubKadId.Pub, pktA.pubKadId.Pub)
-	require.Equal(t, pkt.brkKadId.Pub, pktA.brkKadId.Pub)
-	require.Equal(t, pkt.subKadId.Pub, pktA.subKadId.Pub)
-
-	dst = dst[0:0]
+	// section B:
+	dst = make([]byte, 0)
 	pkt.SetSubscriberKadId(sKidB)
-	pktByteB, okB := twp.acquire(sKidB).pullMessagePacketFromChannel()
-	require.Equal(t, true, okB)
-	require.Equal(t, pkt.AppendTo(dst), pktByteB)
+	require.Equal(t, uint64(len(pkt.AppendTo(dst))), twp.acquire(&prdB).transSucSize+twp.acquire(&prdB).transErrSize)
 
-	pktB, err10 := UnmarshalMessagePacket(pktByteB)
-	require.NoError(t, err10)
-	// the pointer is not equal
-	require.Equal(t, pkt.mid, pktB.mid)
-	require.Equal(t, pkt.qos, pktB.qos)
-	require.Equal(t, pkt.topic, pktB.topic)
-	require.Equal(t, pkt.payLoad, pktB.payLoad)
-	require.Equal(t, pkt.pubKadId.Pub, pktB.pubKadId.Pub)
-	require.Equal(t, pkt.brkKadId.Pub, pktB.brkKadId.Pub)
-	require.Equal(t, pkt.subKadId.Pub, pktB.subKadId.Pub)
-
-	dst = dst[0:0]
+	// section C:
+	dst = make([]byte, 0)
 	pkt.SetSubscriberKadId(sKidC)
-	pktByteC, okC := twp.acquire(sKidC).pullMessagePacketFromChannel()
-	require.Equal(t, true, okC)
-	require.Equal(t, pkt.AppendTo(dst), pktByteC)
+	require.Equal(t, uint64(len(pkt.AppendTo(dst))), twp.acquire(&prdC).transSucSize+twp.acquire(&prdC).transErrSize)
 
-	pktC, err11 := UnmarshalMessagePacket(pktByteC)
-	require.NoError(t, err11)
-	// the pointer is not equal
-	require.Equal(t, pkt.mid, pktC.mid)
-	require.Equal(t, pkt.qos, pktC.qos)
-	require.Equal(t, pkt.topic, pktC.topic)
-	require.Equal(t, pkt.payLoad, pktC.payLoad)
-	require.Equal(t, pkt.pubKadId.Pub, pktC.pubKadId.Pub)
-	require.Equal(t, pkt.brkKadId.Pub, pktC.brkKadId.Pub)
-	require.Equal(t, pkt.subKadId.Pub, pktC.subKadId.Pub)
 }
