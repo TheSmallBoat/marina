@@ -24,7 +24,7 @@ func newTwinsPool() *twinsPool {
 	return &twinsPool{
 		mu:  sync.RWMutex{},
 		sp:  sync.Pool{},
-		ttp: NewTaskPool(defaultMaxTwinWorkers),
+		ttp: newTaskPool(defaultMaxTwinWorkers),
 		mpt: make(map[kademlia.PublicKey]*twin),
 		mpp: make(map[kademlia.PublicKey]*twinServiceProvider),
 	}
@@ -157,4 +157,11 @@ func (tp *twinsPool) release(tw *twin) {
 
 	tw.reset()
 	tp.sp.Put(tw)
+}
+
+func (tp *twinsPool) close() {
+	tp.ttp.close()
+	for _, tw := range tp.mpt {
+		tw.close()
+	}
 }
