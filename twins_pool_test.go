@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	sr "github.com/TheSmallBoat/carlo/streaming_rpc"
 	"github.com/lithdew/kademlia"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/goleak"
@@ -31,7 +30,11 @@ func (p *provider) Push(data []byte) error {
 }
 
 func generateKadId() (*kademlia.ID, error) {
-	sk := sr.GenerateSecretKey()
+	_, sk, err := kademlia.GenerateKeys(nil)
+	if err != nil {
+		return nil, err
+	}
+
 	addr, err := net.ResolveTCPAddr("tcp", ":9000")
 	if err != nil {
 		return nil, err
