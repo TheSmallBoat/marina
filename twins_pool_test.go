@@ -1,9 +1,11 @@
 package marina
 
 import (
+	"fmt"
 	"math/rand"
 	"net"
 	"testing"
+	"time"
 
 	sr "github.com/TheSmallBoat/carlo/streaming_rpc"
 	"github.com/lithdew/kademlia"
@@ -12,7 +14,8 @@ import (
 )
 
 type provider struct {
-	kadId *kademlia.ID
+	kadId   *kademlia.ID
+	counter int
 }
 
 func (p *provider) KadID() *kademlia.ID {
@@ -20,6 +23,10 @@ func (p *provider) KadID() *kademlia.ID {
 }
 
 func (p *provider) Push(data []byte) error {
+	p.counter++
+	if p.counter%2 == 1 {
+		return fmt.Errorf("counter %d", p.counter)
+	}
 	return nil
 }
 
@@ -42,6 +49,8 @@ func TestTwinsPool(t *testing.T) {
 	defer goleak.VerifyNone(t)
 
 	tp := newTwinsPool()
+	defer tp.close()
+
 	twn, pdn := tp.length()
 	require.Equal(t, 0, twn)
 	require.Equal(t, 0, pdn)
@@ -53,9 +62,9 @@ func TestTwinsPool(t *testing.T) {
 	require.NoError(t, err1)
 
 	var prd1 twinServiceProvider = &provider{kadId: kid1}
-	tw1 := tp.acquire(kid1)
+	tw1 := tp.acquire(&prd1)
 
-	require.Equal(t, true, kid1.Pub == tw1.kadId.Pub)
+	require.Equal(t, true, kid1.Pub == (*tw1.prd).KadID().Pub)
 	require.Equal(t, true, kid1.Pub == prd1.KadID().Pub)
 
 	twn, pdn = tp.length()
@@ -63,21 +72,20 @@ func TestTwinsPool(t *testing.T) {
 	require.Equal(t, 1, len(tp.mpt))
 	require.Equal(t, 0, pdn)
 	require.Equal(t, 0, len(tp.mpp))
-
-	require.Equal(t, false, tp.pairStatus(kid1))
+	//require.Equal(t, false, tp.pairStatus(kid1.Pub))
 
 	otn, mtn := tp.checkTwinsProvidersPairStatus()
 	require.Equal(t, 1, otn)
 	require.Equal(t, 0, mtn)
 	require.Equal(t, false, tw1.onlineStatus())
-	require.Equal(t, false, tp.pairStatus(kid1))
+	//require.Equal(t, false, tp.pairStatus(kid1.Pub))
 
 	pn := tp.appendProviders(&prd1)
 	require.Equal(t, 1, pn)
 	require.Equal(t, 1, len(tp.mpt))
 	require.Equal(t, 1, len(tp.mpp))
 	require.Equal(t, true, tw1.onlineStatus())
-	require.Equal(t, true, tp.pairStatus(kid1))
+	//require.Equal(t, true, tp.pairStatus(kid1.Pub))
 
 	// the same provider append again
 	pn = tp.appendProviders(&prd1)
@@ -89,44 +97,55 @@ func TestTwinsPool(t *testing.T) {
 	require.Equal(t, 0, otn)
 	require.Equal(t, 0, mtn)
 	require.Equal(t, true, tw1.onlineStatus())
-	require.Equal(t, true, tp.pairStatus(kid1))
+	//require.Equal(t, true, tp.pairStatus(kid1.Pub))
 
 	require.Equal(t, tw1, tp.mpt[kid1.Pub])
-	require.Equal(t, uint32(0), tw1.counter)
-	require.Equal(t, uint32(0), tw1.offNum)
+	require.Equal(t, uint32(0), tw1.pushSucNum)
+	require.Equal(t, uint32(0), tw1.pushErrNum)
 	require.Equal(t, true, tw1.online)
 	require.NoError(t, tw1.pushMessagePacketToChannel([]byte("hello,world")))
-	require.Equal(t, uint32(1), tw1.counter)
-	require.Equal(t, uint32(0), tw1.offNum)
+	require.Equal(t, uint32(1), tw1.pushSucNum)
+	require.Equal(t, uint32(0), tw1.pushErrNum)
 
-	b, ok := tw1.pullMessagePacketFromChannel()
-	require.Equal(t, true, ok)
-	require.Equal(t, []byte("hello,world"), b)
-
+	tw1.turnToOffline()
+	// test run twice
 	tw1.turnToOffline()
 	require.Equal(t, false, tw1.online)
 	require.Error(t, tw1.pushMessagePacketToChannel([]byte("hello,world.")))
-	require.Equal(t, uint32(1), tw1.counter)
-	require.Equal(t, uint32(1), tw1.offNum)
-	require.Equal(t, true, tp.pairStatus(kid1))
+	require.Equal(t, uint32(1), tw1.pushSucNum)
+	require.Equal(t, uint32(1), tw1.pushErrNum)
+	//require.Equal(t, true, tp.pairStatus(kid1.Pub))
 
+	tw1.turnToOnline()
+	// test run twice
 	tw1.turnToOnline()
 	require.Equal(t, true, tw1.online)
 	require.NoError(t, tw1.pushMessagePacketToChannel([]byte("hello,world..")))
-	require.Equal(t, uint32(2), tw1.counter)
-	require.Equal(t, uint32(1), tw1.offNum)
-	require.Equal(t, true, tp.pairStatus(kid1))
+	require.Equal(t, uint32(2), tw1.pushSucNum)
+	require.Equal(t, uint32(1), tw1.pushErrNum)
+	//require.Equal(t, true, tp.pairStatus(kid1.Pub))
 
-	b, ok = tw1.pullMessagePacketFromChannel()
-	require.Equal(t, true, ok)
-	require.Equal(t, []byte("hello,world.."), b)
+	otn, mtn = tp.checkTwinsProvidersPairStatus()
+	require.Equal(t, 0, otn)
+	require.Equal(t, 0, mtn)
+	require.Equal(t, true, tw1.onlineStatus())
 
 	tw1.turnToOffline()
 	require.Equal(t, false, tw1.online)
 	require.Error(t, tw1.pushMessagePacketToChannel([]byte("hello,world...")))
-	require.Equal(t, uint32(2), tw1.counter)
-	require.Equal(t, uint32(2), tw1.offNum)
-	require.Equal(t, true, tp.pairStatus(kid1))
+	require.Equal(t, uint32(2), tw1.pushSucNum)
+	require.Equal(t, uint32(2), tw1.pushErrNum)
+	//require.Equal(t, true, tp.pairStatus(kid1.Pub))
+
+	otn, mtn = tp.checkTwinsProvidersPairStatus()
+	require.Equal(t, 0, otn)
+	require.Equal(t, 0, mtn)
+	require.Equal(t, true, tw1.onlineStatus())
+
+	require.Equal(t, true, tw1.online)
+	require.NoError(t, tw1.pushMessagePacketToChannel([]byte("hello,world...xyz")))
+	require.Equal(t, uint32(3), tw1.pushSucNum)
+	require.Equal(t, uint32(2), tw1.pushErrNum)
 
 	tp.release(tw1)
 	twn, pdn = tp.length()
@@ -137,13 +156,12 @@ func TestTwinsPool(t *testing.T) {
 	require.Empty(t, tp.mpt)
 
 	require.Equal(t, false, tw1.onlineStatus())
-	require.Equal(t, false, tp.pairStatus(kid1))
+	//require.Equal(t, true, tp.pairStatus(kid1.Pub))
 
 	otn, mtn = tp.checkTwinsProvidersPairStatus()
 	require.Equal(t, 0, otn)
 	require.Equal(t, 1, mtn)
-	require.Equal(t, true, tw1.onlineStatus())
-	require.Equal(t, true, tp.pairStatus(kid1))
+	require.Equal(t, tw1, tp.mpt[prd1.KadID().Pub])
 
 	twn, pdn = tp.length()
 	require.Equal(t, 1, twn)
@@ -156,8 +174,9 @@ func TestTwinsPool(t *testing.T) {
 	require.NoError(t, err2)
 	require.Equal(t, false, kid1.Pub == kid2.Pub)
 
-	tw2 := tp.acquire(kid2)
-	require.Equal(t, true, kid2.Pub == tw2.kadId.Pub)
+	var prd2 twinServiceProvider = &provider{kadId: kid2}
+	tw2 := tp.acquire(&prd2)
+	require.Equal(t, true, kid2.Pub == (*tw2.prd).KadID().Pub)
 
 	twn, pdn = tp.length()
 	require.Equal(t, 2, twn)
@@ -165,68 +184,131 @@ func TestTwinsPool(t *testing.T) {
 	require.Equal(t, 1, pdn)
 	require.Equal(t, 1, len(tp.mpp))
 	require.Equal(t, tw2, tp.mpt[kid2.Pub])
-	require.Equal(t, uint32(0), tw2.counter)
-	require.Equal(t, uint32(0), tw2.offNum)
+	require.Equal(t, uint32(0), tw2.pushSucNum)
+	require.Equal(t, uint32(0), tw2.pushErrNum)
 	require.Equal(t, true, tw2.online)
-	require.Equal(t, true, tp.pairStatus(kid1))
-	require.Equal(t, false, tp.pairStatus(kid2))
+	//require.Equal(t, true, tp.pairStatus(kid1.Pub))
+	//require.Equal(t, false, tp.pairStatus(kid2.Pub))
 
 	require.NoError(t, tw2.pushMessagePacketToChannel([]byte("hello,world....")))
-	require.Equal(t, uint32(1), tw2.counter)
-	require.Equal(t, uint32(0), tw2.offNum)
+	require.Equal(t, uint32(1), tw2.pushSucNum)
+	require.Equal(t, uint32(0), tw2.pushErrNum)
 
-	b2, ok2 := tw2.pullMessagePacketFromChannel()
-	require.Equal(t, true, ok2)
-	require.Equal(t, []byte("hello,world...."), b2)
+	require.NoError(t, tw2.pushMessagePacketToChannel([]byte("hello,world.12345")))
+	require.Equal(t, uint32(2), tw2.pushSucNum)
+	require.Equal(t, uint32(0), tw2.pushErrNum)
 
-	tp.checkTwinsProvidersPairStatus()
+	otn, mtn = tp.checkTwinsProvidersPairStatus()
+	require.Equal(t, 1, otn)
+	require.Equal(t, 0, mtn)
 	require.Equal(t, true, tw1.onlineStatus())
 	require.Equal(t, false, tw2.onlineStatus())
 
 	require.Equal(t, false, tw2.online)
-	require.Error(t, tw2.pushMessagePacketToChannel([]byte("hello,world......")))
-	require.Equal(t, uint32(1), tw2.counter)
-	require.Equal(t, uint32(1), tw2.offNum)
+	require.Error(t, tw2.pushMessagePacketToChannel([]byte("hello,world.a.b.c.d.e")))
+	require.Equal(t, uint32(2), tw2.pushSucNum)
+	require.Equal(t, uint32(1), tw2.pushErrNum)
 
-	tp.release(tw2)
+	time.Sleep(10 * time.Millisecond)
+	tp.maxOfflineTimeDuration = 5 * time.Millisecond
+	otn, mtn = tp.checkTwinsProvidersPairStatus()
+	require.Equal(t, 1, otn)
+	require.Equal(t, 0, mtn)
+	require.Equal(t, true, tw1.onlineStatus())
+	require.Equal(t, false, tw2.onlineStatus())
+
 	twn, pdn = tp.length()
 	require.Equal(t, 1, twn)
 	require.Equal(t, 1, len(tp.mpt))
 	require.Equal(t, 1, pdn)
 	require.Equal(t, 1, len(tp.mpp))
 
-	require.Equal(t, true, tp.pairStatus(kid1))
-	require.Equal(t, false, tp.pairStatus(kid2))
+	// tw2 already reset
+	tp.release(tw2)
+
+	//require.Equal(t, true, tp.pairStatus(kid1.Pub))
+	//require.Equal(t, false, tp.pairStatus(kid2.Pub))
+
+	time.Sleep(5 * time.Millisecond)
 
 	// section 3:
-	tw1 = tp.acquire(kid1)
+	tw1 = tp.acquire(&prd1)
 	twn, pdn = tp.length()
 	require.Equal(t, 1, twn)
 	require.Equal(t, 1, len(tp.mpt))
 	require.Equal(t, 1, pdn)
 	require.Equal(t, 1, len(tp.mpp))
-	tw2 = tp.acquire(kid2)
+	require.Equal(t, true, tw1.onlineStatus())
+
+	tw2 = tp.acquire(&prd2)
 	twn, pdn = tp.length()
 	require.Equal(t, 2, twn)
 	require.Equal(t, 2, len(tp.mpt))
 	require.Equal(t, 1, pdn)
 	require.Equal(t, 1, len(tp.mpp))
-	tw3 := tp.acquire(kid2)
+	require.Equal(t, true, tw2.onlineStatus())
+
+	tw2.turnToOffline()
+	tw3 := tp.acquire(&prd2)
 	twn, pdn = tp.length()
 	require.Equal(t, 2, twn)
 	require.Equal(t, 2, len(tp.mpt))
 	require.Equal(t, 1, pdn)
 	require.Equal(t, 1, len(tp.mpp))
-	require.Equal(t, tw2.kadId, tw3.kadId)
+	require.Equal(t, (*tw2.prd).KadID(), (*tw3.prd).KadID())
+	require.Equal(t, true, tw3.onlineStatus())
+
+	pn = tp.appendProviders(&prd1, &prd2)
+	require.Equal(t, 1, pn)
+	require.Equal(t, 2, len(tp.mpt))
+	require.Equal(t, 2, len(tp.mpp))
+
+	// section 4:
+	kid3, err3 := generateKadId()
+	require.NoError(t, err3)
+
+	var prd3 twinServiceProvider = &provider{kadId: kid3}
+	tw3d := tp.acquire(&prd3)
+	require.Equal(t, true, kid3.Pub == (*tw3d.prd).KadID().Pub)
+	pn = tp.appendProviders(&prd1, &prd2, &prd3)
+	require.Equal(t, 1, pn)
+	require.Equal(t, 3, len(tp.mpt))
+	require.Equal(t, 3, len(tp.mpp))
+
+	otn, mtn = tp.checkTwinsProvidersPairStatus()
+	require.Equal(t, 0, otn)
+	require.Equal(t, 0, mtn)
+
+	// section 5:
+	tp.release(tw1)
+	tp.release(tw1)
+	tp.release(tw2)
+	tp.release(tw2)
+	tp.release(tw3)
+	tp.release(tw3)
+	tp.release(tw3d)
+	tp.release(tw3d)
+
+	var prd4 twinServiceProvider = &provider{kadId: nil}
+	tw4 := tp.acquire(&prd4)
+	tp.release(tw4)
+
+	otn, mtn = tp.checkTwinsProvidersPairStatus()
+	require.Equal(t, 0, otn)
+	require.Equal(t, 3, mtn)
 }
 
 func BenchmarkTwinsPool(b *testing.B) {
 	tp := newTwinsPool()
+	defer tp.close()
+
 	require.Empty(b, tp.mpt)
 
 	kid, err1 := generateKadId()
 	require.NoError(b, err1)
-	tw := tp.acquire(kid)
+
+	var prd twinServiceProvider = &provider{kadId: kid}
+	tw := tp.acquire(&prd)
 
 	buf := make([]byte, 1400)
 	_, err2 := rand.Read(buf)
@@ -241,18 +323,16 @@ func BenchmarkTwinsPool(b *testing.B) {
 		if err != nil {
 			b.Fatal(err)
 		}
-		tw.pullMessagePacketFromChannel()
 	}
 
 	tp.release(tw)
 	require.Empty(b, tp.mpt)
 
-	tw2 := tp.acquire(kid)
+	tw2 := tp.acquire(&prd)
 	for i := 0; i < b.N; i++ {
 		err := tw2.pushMessagePacketToChannel(buf)
 		if err != nil {
 			b.Fatal(err)
 		}
-		tw2.pullMessagePacketFromChannel()
 	}
 }

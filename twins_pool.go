@@ -18,15 +18,18 @@ type twinsPool struct {
 	// One remote service provider paired with one twin which own the same KadID.
 	mpt map[kademlia.PublicKey]*twin
 	mpp map[kademlia.PublicKey]*twinServiceProvider
+
+	maxOfflineTimeDuration time.Duration
 }
 
 func newTwinsPool() *twinsPool {
 	return &twinsPool{
-		mu:  sync.RWMutex{},
-		sp:  sync.Pool{},
-		ttp: newTaskPool(defaultMaxTwinWorkers),
-		mpt: make(map[kademlia.PublicKey]*twin),
-		mpp: make(map[kademlia.PublicKey]*twinServiceProvider),
+		mu:                     sync.RWMutex{},
+		sp:                     sync.Pool{},
+		ttp:                    newTaskPool(defaultMaxTwinWorkers),
+		mpt:                    make(map[kademlia.PublicKey]*twin),
+		mpp:                    make(map[kademlia.PublicKey]*twinServiceProvider),
+		maxOfflineTimeDuration: defaultMaxTwinOfflineTimeDuration,
 	}
 }
 
@@ -64,13 +67,16 @@ func (tp *twinsPool) checkTwinsProvidersPairStatus() (int, int) {
 
 		if exist {
 			pNum++
+			if !tw.onlineStatus() {
+				tw.turnToOnline()
+			}
 		} else {
 			offlineTwinNum++
 			if tw.onlineStatus() {
 				tw.turnToOffline()
 			} else {
 				// Releasing the twin that has been offline for too long.
-				if time.Since(tw.scTime) > defaultMaxTwinOfflineTimeDuration {
+				if time.Since(tw.scTime) > tp.maxOfflineTimeDuration {
 					tp.release(tw)
 				}
 			}
@@ -119,6 +125,10 @@ func (tp *twinsPool) existTwin(pubK kademlia.PublicKey) (*twin, bool) {
 }
 
 func (tp *twinsPool) acquire(provider *twinServiceProvider) *twin {
+	if provider == nil || (*provider).KadID() == nil {
+		return nil
+	}
+
 	pubK := (*provider).KadID().Pub
 	tw, exist := tp.existTwin(pubK)
 	if exist {
@@ -144,6 +154,11 @@ func (tp *twinsPool) acquire(provider *twinServiceProvider) *twin {
 }
 
 func (tp *twinsPool) release(tw *twin) {
+	if tw == nil || tw.prd == nil || (*tw.prd).KadID() == nil {
+		// already reset or kadId pointer equal nil
+		return
+	}
+
 	pubK := (*tw.prd).KadID().Pub
 	tp.mu.RLock()
 	_, exist := tp.mpt[pubK]

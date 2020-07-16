@@ -29,15 +29,17 @@ type twin struct {
 
 func newTwin(provider *twinServiceProvider) *twin {
 	tw := &twin{
-		prd:         provider,
-		tc:          make(chan []byte, defaultTwinChannelSize),
-		exit:        make(chan struct{}, 0),
-		mu:          sync.RWMutex{},
-		online:      false,
-		pushSucNum:  uint32(0),
-		pushErrNum:  uint32(0),
-		transSucNum: uint32(0),
-		transErrNum: uint32(0),
+		prd:          provider,
+		tc:           make(chan []byte, defaultTwinChannelSize),
+		exit:         make(chan struct{}, 0),
+		mu:           sync.RWMutex{},
+		online:       false,
+		pushSucNum:   uint32(0),
+		pushErrNum:   uint32(0),
+		transSucNum:  uint32(0),
+		transErrNum:  uint32(0),
+		transSucSize: uint64(0),
+		transErrSize: uint64(0),
 	}
 
 	tw.turnToOnline()
@@ -66,27 +68,33 @@ func (t *twin) pushMessagePacketToChannel(pkt []byte) error {
 	return nil
 }
 
+/*
 func (t *twin) pullMessagePacketFromChannel() ([]byte, bool) {
 	pkt, ok := <-t.tc
 	return pkt, ok
-}
+}*/
 
 func (t *twin) turnToOffline() {
-	t.mu.Lock()
-	defer t.mu.Unlock()
+	if t.onlineStatus() {
+		t.exit <- struct{}{}
 
-	t.exit <- struct{}{}
-	t.online = false
-	t.scTime = time.Now()
+		t.mu.Lock()
+		defer t.mu.Unlock()
+
+		t.online = false
+		t.scTime = time.Now()
+	}
 }
 
 func (t *twin) turnToOnline() {
-	t.mu.Lock()
-	defer t.mu.Unlock()
+	if !t.onlineStatus() {
+		t.mu.Lock()
+		defer t.mu.Unlock()
 
-	t.online = true
-	t.scTime = time.Now()
-	t.executeTask()
+		t.executeTask()
+		t.online = true
+		t.scTime = time.Now()
+	}
 }
 
 func (t *twin) reset() {
@@ -95,11 +103,14 @@ func (t *twin) reset() {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
+	close(t.tc)
 	t.prd = nil
 	t.pushSucNum = 0
 	t.pushErrNum = 0
 	t.transSucNum = 0
 	t.transErrNum = 0
+	t.transSucSize = 0
+	t.transErrSize = 0
 }
 
 func (t *twin) initWithOnline(provider *twinServiceProvider) {
@@ -135,5 +146,9 @@ func (t *twin) executeTask() {
 }
 
 func (t *twin) close() {
-	t.exit <- struct{}{}
+	if t.onlineStatus() {
+		t.exit <- struct{}{}
+	}
+	close(t.tc)
+	close(t.exit)
 }
