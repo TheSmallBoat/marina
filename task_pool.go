@@ -13,7 +13,7 @@ type taskPool struct {
 	exit        []chan struct{}
 }
 
-func NewTaskPool(maxWorkers uint16) *taskPool {
+func newTaskPool(maxWorkers uint16) *taskPool {
 	// There must be at least one worker.
 	if maxWorkers < 1 {
 		maxWorkers = 1
@@ -55,7 +55,7 @@ func (tp *taskPool) dispatch() {
 	}
 }
 
-func (tp *taskPool) Close() {
+func (tp *taskPool) close() {
 	for i := uint16(0); i < tp.maxWorkers; i++ {
 		tp.exit[i] <- struct{}{}
 	}
@@ -66,7 +66,7 @@ func (tp *taskPool) getId() uint16 {
 	return uint16(tp.taskCounter % uint32(tp.maxWorkers))
 }
 
-func (tp *taskPool) SubmitTask(task func()) {
+func (tp *taskPool) submitTask(task func()) {
 	if task != nil {
 		tp.taskQueue[tp.getId()] <- task
 	}

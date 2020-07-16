@@ -25,18 +25,18 @@ func myFunc() {
 func TestTaskPool(t *testing.T) {
 	defer goleak.VerifyNone(t)
 
-	var tp0 = NewTaskPool(0)
-	defer tp0.Close()
+	var tp0 = newTaskPool(0)
+	defer tp0.close()
 
-	var tp = NewTaskPool(8)
-	defer tp.Close()
+	var tp = newTaskPool(8)
+	defer tp.close()
 
 	require.Equal(t, tp.maxWorkers, uint16(8))
 
 	for i := 0; i < 1024; i++ {
 		wg.Add(1)
 		time.Sleep(1 * time.Nanosecond)
-		tp.SubmitTask(myFunc)
+		tp.submitTask(myFunc)
 	}
 	wg.Wait()
 	require.Equal(t, tp.taskCounter*uint32(step), uint32(sum))
@@ -46,14 +46,14 @@ func BenchmarkTaskPool(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 
-	var tp = NewTaskPool(8)
-	defer tp.Close()
+	var tp = newTaskPool(8)
+	defer tp.close()
 
 	require.Equal(b, tp.maxWorkers, uint16(8))
 
 	for i := 0; i < b.N; i++ {
 		wg.Add(1)
-		tp.SubmitTask(myFunc)
+		tp.submitTask(myFunc)
 	}
 	wg.Wait()
 }
