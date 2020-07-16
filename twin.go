@@ -52,7 +52,7 @@ func (t *twin) onlineStatus() bool {
 
 func (t *twin) pushMessagePacketToChannel(pkt []byte) error {
 	if !t.onlineStatus() {
-		//todo : maybe need to cache the pkt until the expire time coming.
+		//todo : building a global cache for all the twins while they offline until expire.
 
 		kadId := (*t.prd).KadID()
 		atomic.AddUint32(&t.pushErrNum, uint32(1))
