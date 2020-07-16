@@ -19,10 +19,12 @@ type twin struct {
 	online bool      // The flag about the activity of the peer-node twin, if true means that can work, otherwise cannot.
 	scTime time.Time // The change time of the online/offline status.
 
-	pushSucNum  uint32 // The counter for the pushing operation while online.
-	pushErrNum  uint32 // The counter for the pushing operation while offline.
-	transSucNum uint32 // the success count of the transmitting data operation
-	transErrNum uint32 // the error count of the transmitting data operation
+	pushSucNum   uint32 // The counter for the pushing operation while online.
+	pushErrNum   uint32 // The counter for the pushing operation while offline.
+	transSucNum  uint32 // the success count of the transmitting data operation
+	transErrNum  uint32 // the error count of the transmitting data operation
+	transSucSize uint64 // the success count of the transmitting data operation
+	transErrSize uint64 // the error count of the transmitting data operation
 }
 
 func newTwin(provider *twinServiceProvider) *twin {
@@ -115,11 +117,14 @@ func (t *twin) executeTask() {
 			select {
 			case data, ok := <-t.tc:
 				if ok {
+					size := len(data)
 					err := (*t.prd).Push(data)
 					if err != nil {
 						atomic.AddUint32(&t.transErrNum, uint32(1))
+						atomic.AddUint64(&t.transErrSize, uint64(size))
 					} else {
 						atomic.AddUint32(&t.transSucNum, uint32(1))
+						atomic.AddUint64(&t.transSucSize, uint64(size))
 					}
 				}
 			case <-t.exit:
@@ -127,4 +132,8 @@ func (t *twin) executeTask() {
 			}
 		}
 	}()
+}
+
+func (t *twin) close() {
+	t.exit <- struct{}{}
 }
