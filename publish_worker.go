@@ -26,7 +26,7 @@ type publishWorker struct {
 
 func NewPublishWorker(bKadId *kademlia.ID, tTree *cabinet.TTree) *publishWorker {
 	return &publishWorker{
-		tp:        NewTaskPool(defaultMaxPublishWorkers),
+		tp:        newTaskPool(defaultMaxPublishWorkers),
 		kadId:     bKadId,
 		tt:        tTree,
 		pubSucNum: 0,
@@ -59,7 +59,7 @@ func (p *publishWorker) WorkFor(pkt *MessagePacket) {
 	}
 
 	p.wg.Add(1)
-	p.tp.SubmitTask(func() { forwardMessagePacket(p, pkt) })
+	p.tp.submitTask(func() { forwardMessagePacket(p, pkt) })
 }
 
 // To find the matched topic, and put the messagePacket to the twin
@@ -94,7 +94,7 @@ func forwardMessagePacket(pubW *publishWorker, pkt *MessagePacket) {
 }
 
 func (p *publishWorker) Close() {
-	p.tp.Close()
+	p.tp.close()
 }
 
 func (p *publishWorker) Wait() {

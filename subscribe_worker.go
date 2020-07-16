@@ -26,7 +26,7 @@ type subscribeWorker struct {
 
 func NewSubscribeWorker(twp *twinsPool, tTree *cabinet.TTree) *subscribeWorker {
 	return &subscribeWorker{
-		tp:          NewTaskPool(defaultMaxSubscribeWorkers),
+		tp:          newTaskPool(defaultMaxSubscribeWorkers),
 		twp:         twp,
 		tt:          tTree,
 		subSucNum:   0,
@@ -42,7 +42,7 @@ func (s *subscribeWorker) peerNodeSubscribe(prd *twinServiceProvider, qos byte, 
 		// Todo:process response
 	}
 	s.wg.Add(1)
-	s.tp.SubmitTask(func() { processPeerNodeSubscribe(s, prd, topic) })
+	s.tp.submitTask(func() { processPeerNodeSubscribe(s, prd, topic) })
 }
 
 func (s *subscribeWorker) peerNodeUnSubscribe(pubK kademlia.PublicKey, qos byte, topic []byte) {
@@ -51,7 +51,7 @@ func (s *subscribeWorker) peerNodeUnSubscribe(pubK kademlia.PublicKey, qos byte,
 	}
 
 	s.wg.Add(1)
-	s.tp.SubmitTask(func() { processPeerNodeUnSubscribe(s, pubK, topic) })
+	s.tp.submitTask(func() { processPeerNodeUnSubscribe(s, pubK, topic) })
 }
 
 // To link the twin for the peer-node to this topic
@@ -84,7 +84,7 @@ func processPeerNodeUnSubscribe(subW *subscribeWorker, pubK kademlia.PublicKey, 
 }
 
 func (s *subscribeWorker) Close() {
-	s.tp.Close()
+	s.tp.close()
 }
 
 func (s *subscribeWorker) Wait() {
