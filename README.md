@@ -3,7 +3,7 @@ An abstract library that implements a topic-based publish/subscribe mechanism,
 and using the concept of the digital twins that include the interfaces to bind remote service providers, 
 achieves decoupling from specific network protocol libraries.
 
-## Little dependencies
+## low dependence
 1. github.com/TheSmallBoat/cabinet (Using the tree-structure topics manager.)
 2. github.com/lithdew/kademlia (Used for the twin‘s identity, cause support the distributed system.)
 3. github.com/lithdew/bytesutil (Used for the binary codec.)
