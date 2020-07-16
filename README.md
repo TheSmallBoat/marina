@@ -10,7 +10,12 @@ achieves decoupling from specific network protocol libraries.
 4. github.com/stretchr/testify (Used in testing.)
 5. go.uber.org/goleak (Used in testing.)
 
+## test coverage
+* 100.0% of statements
+
+
 ```
+
 % sysctl -a | grep machdep.cpu | grep 'brand_'
 machdep.cpu.brand_string: Intel(R) Core(TM) i5-7267U CPU @ 3.10GHz
 
@@ -39,4 +44,5 @@ BenchmarkTaskPool-4     34860289               348 ns/op               0 B/op   
 BenchmarkTwinsPool-4    19888471               599 ns/op        2336.85 MB/s          40 B/op          3 allocs/op
 PASS
 ok      github.com/TheSmallBoat/marina  25.257s
+
 ```
