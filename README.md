@@ -15,7 +15,7 @@ achieves the decoupling from specific network protocol libraries.
 
 ## Design Architecture Diagram [link](https://github.com/TheSmallBoat/marina/blob/master/docs/DesignArchitectureDiagram.pdf)
 
-<img width ="640" height="360" src="https://github.com/TheSmallBoat/marina/blob/master/docs/DesignArchitectureDiagram.jpeg">
+<img width ="960" height="540" src="https://github.com/TheSmallBoat/marina/blob/master/docs/DesignArchitectureDiagram.jpeg">
 
 
 
