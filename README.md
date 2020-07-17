@@ -1,18 +1,22 @@
 # marina
 An abstract library that implements a topic-based publish/subscribe mechanism, 
 and using the concept of the digital twins that include the interfaces to bind remote service providers, 
-achieves decoupling from specific network protocol libraries.
+achieves the decoupling from specific network protocol libraries.
 
 ## low dependence
-1. github.com/TheSmallBoat/cabinet (Using the tree-structure topics manager.)
-2. github.com/lithdew/kademlia (Used for the twin‘s identity, cause support the distributed system.)
-3. github.com/lithdew/bytesutil (Used for the binary codec.)
-4. github.com/stretchr/testify (Used in testing.)
-5. go.uber.org/goleak (Used in testing.)
+1. [cabinet](github.com/TheSmallBoat/cabinet) (Using the tree-structure topics manager.)
+2. [kademlia](github.com/lithdew/kademlia) (Used for the twin‘s identity, cause support the distributed system.)
+3. [bytesutil](github.com/lithdew/bytesutil) (Used for the binary codec.)
+4. [testify](github.com/stretchr/testify) (Used in testing.)
+5. [goleak](go.uber.org/goleak) (Used in testing.)
 
 ## test coverage
 * 100.0% of statements
 
+
+## Design Architecture Diagram [link](https://github.com/TheSmallBoat/marina/blob/master/docs/DesignArchitectureDiagram.jpeg)
+
+<img align="left" width ="640" height="360" src="https://github.com/TheSmallBoat/marina/blob/master/docs/DesignArchitectureDiagram.jpeg">
 
 ```
 
