@@ -7,11 +7,11 @@ achieves the decoupling from specific network protocol libraries.
 * 100.0% of statements
 
 ## low dependence
-1. [cabinet](github.com/TheSmallBoat/cabinet) (Using the tree-structure topics manager.)
-2. [kademlia](github.com/lithdew/kademlia) (Used for the twin‘s identity, cause support the distributed system.)
-3. [bytesutil](github.com/lithdew/bytesutil) (Used for the binary codec.)
-4. [testify](github.com/stretchr/testify) (Used in testing.)
-5. [goleak](go.uber.org/goleak) (Used in testing.)
+1. [cabinet](https://github.com/TheSmallBoat/cabinet) (Using the tree-structure topics manager.)
+2. [kademlia](https://github.com/lithdew/kademlia) (Used for the twin‘s identity, cause support the distributed system.)
+3. [bytesutil](https://github.com/lithdew/bytesutil) (Used for the binary codec.)
+4. [testify](https://github.com/stretchr/testify) (Used in testing.)
+5. [goleak](https://pkg.go.dev/go.uber.org/goleak?tab=doc) (Used in testing.)
 
 ## Design Architecture Diagram [link](https://github.com/TheSmallBoat/marina/blob/master/docs/DesignArchitectureDiagram.pdf)
 
