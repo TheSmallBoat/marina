@@ -16,7 +16,11 @@ achieves the decoupling from specific network protocol libraries.
 
 ## Design Architecture Diagram [link](https://github.com/TheSmallBoat/marina/blob/master/docs/DesignArchitectureDiagram.jpeg)
 
-<img align="left" width ="640" height="360" src="https://github.com/TheSmallBoat/marina/blob/master/docs/DesignArchitectureDiagram.jpeg">
+<img width ="640" height="360" src="https://github.com/TheSmallBoat/marina/blob/master/docs/DesignArchitectureDiagram.jpeg">
+
+
+
+## 
 
 ```
 
