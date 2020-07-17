@@ -13,9 +13,9 @@ achieves the decoupling from specific network protocol libraries.
 4. [testify](github.com/stretchr/testify) (Used in testing.)
 5. [goleak](go.uber.org/goleak) (Used in testing.)
 
-## Design Architecture Diagram [link](https://github.com/TheSmallBoat/marina/blob/master/docs/DesignArchitectureDiagram.jpeg)
+## Design Architecture Diagram [link](https://github.com/TheSmallBoat/marina/blob/master/docs/DesignArchitectureDiagram.pdf)
 
-<img width ="960" height="540" src="https://github.com/TheSmallBoat/marina/blob/master/docs/DesignArchitectureDiagram.jpeg">
+<img width ="640" height="360" src="https://github.com/TheSmallBoat/marina/blob/master/docs/DesignArchitectureDiagram.jpeg">
 
 
 
