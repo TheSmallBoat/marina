@@ -13,16 +13,18 @@ achieves the decoupling from specific network protocol libraries.
 4. [testify](https://github.com/stretchr/testify) (Used in testing.)
 5. [goleak](https://pkg.go.dev/go.uber.org/goleak?tab=doc) (Used in testing.)
 
-## Design Architecture Diagram [link](https://github.com/TheSmallBoat/marina/blob/master/docs/DesignArchitectureDiagram.pdf)
-
-<img width ="960" height="540" src="https://github.com/TheSmallBoat/marina/blob/master/docs/DesignArchitectureDiagram.jpeg">
-
 ## Source of inspiration
 At first, it was to build a stream-based peer-to-peer network message Hub, 
 which does not rely on the MQTT protocol. With the introduction of twin, 
 it can be completely decoupled from the communication module, so that a peer-to-peer network is only an option, 
 which can be a traditional distributed system cluster or a single-point server, and which can use TCP or UDP. 
 It has strong flexibility and versatility. 
+
+## Design Architecture Diagram [link](https://github.com/TheSmallBoat/marina/blob/master/docs/DesignArchitectureDiagram.pdf)
+
+<img width ="960" height="540" src="https://github.com/TheSmallBoat/marina/blob/master/docs/DesignArchitectureDiagram.jpeg">
+
+###
 
 ```
 
