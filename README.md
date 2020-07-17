@@ -3,6 +3,9 @@ An abstract library that implements a topic-based publish/subscribe mechanism,
 and using the concept of the digital twins that include the interfaces to bind remote service providers, 
 achieves the decoupling from specific network protocol libraries.
 
+## test coverage
+* 100.0% of statements
+
 ## low dependence
 1. [cabinet](github.com/TheSmallBoat/cabinet) (Using the tree-structure topics manager.)
 2. [kademlia](github.com/lithdew/kademlia) (Used for the twin‘s identity, cause support the distributed system.)
@@ -10,17 +13,13 @@ achieves the decoupling from specific network protocol libraries.
 4. [testify](github.com/stretchr/testify) (Used in testing.)
 5. [goleak](go.uber.org/goleak) (Used in testing.)
 
-## test coverage
-* 100.0% of statements
-
-
 ## Design Architecture Diagram [link](https://github.com/TheSmallBoat/marina/blob/master/docs/DesignArchitectureDiagram.jpeg)
 
-<img width ="640" height="360" src="https://github.com/TheSmallBoat/marina/blob/master/docs/DesignArchitectureDiagram.jpeg">
+<img width ="960" height="540" src="https://github.com/TheSmallBoat/marina/blob/master/docs/DesignArchitectureDiagram.jpeg">
 
 
 
-## 
+### 
 
 ```
 
