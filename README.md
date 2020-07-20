@@ -20,7 +20,7 @@ it can be completely decoupled from the communication module, so that a peer-to-
 which can be a traditional cluster or a single-point server, and which can use the TCP or UDP protocol.  
 So it has stronger flexibility and versatility. 
 
-## Design Architecture Diagram [pdf](https://github.com/TheSmallBoat/marina/blob/master/docs/DesignArchitectureDiagram.pdf) [keynote](https://github.com/TheSmallBoat/marina/blob/master/docs/DesignArchitectureDiagram.key)
+## Design Architecture Diagram (download link => [pdf file](https://github.com/TheSmallBoat/marina/blob/master/docs/DesignArchitectureDiagram.pdf)  [keynote file](https://github.com/TheSmallBoat/marina/blob/master/docs/DesignArchitectureDiagram.key) )
 
 <img width ="960" height="540" src="https://github.com/TheSmallBoat/marina/blob/master/docs/DesignArchitectureDiagram.jpeg">
 
