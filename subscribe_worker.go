@@ -37,7 +37,7 @@ func NewSubscribeWorker(twp *TwinsPool, tTree *cabinet.TTree) *SubscribeWorker {
 }
 
 // kid : the subscribe-peer-node kadId
-func (s *SubscribeWorker) peerNodeSubscribe(prd *TwinServiceProvider, qos byte, topic []byte) {
+func (s *SubscribeWorker) PeerNodeSubscribe(prd *TwinServiceProvider, qos byte, topic []byte) {
 	if qos == byte(1) {
 		// Todo:process response
 	}
@@ -45,7 +45,7 @@ func (s *SubscribeWorker) peerNodeSubscribe(prd *TwinServiceProvider, qos byte, 
 	s.tp.submitTask(func() { processPeerNodeSubscribe(s, prd, topic) })
 }
 
-func (s *SubscribeWorker) peerNodeUnSubscribe(pubK kademlia.PublicKey, qos byte, topic []byte) {
+func (s *SubscribeWorker) PeerNodeUnSubscribe(pubK kademlia.PublicKey, qos byte, topic []byte) {
 	if qos == byte(1) {
 		// Todo:process response
 	}
