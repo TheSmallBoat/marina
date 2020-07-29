@@ -11,9 +11,9 @@ import (
 const defaultMaxSubscribeWorkers = 4
 
 // The subscribe packets come from the peer-nodes.
-type subscribeWorker struct {
+type SubscribeWorker struct {
 	tp  *taskPool
-	twp *twinsPool
+	twp *TwinsPool
 	tt  *cabinet.TTree
 
 	subSucNum   uint32 // the success count of the subscribing operation
@@ -24,8 +24,8 @@ type subscribeWorker struct {
 	wg sync.WaitGroup
 }
 
-func NewSubscribeWorker(twp *twinsPool, tTree *cabinet.TTree) *subscribeWorker {
-	return &subscribeWorker{
+func NewSubscribeWorker(twp *TwinsPool, tTree *cabinet.TTree) *SubscribeWorker {
+	return &SubscribeWorker{
 		tp:          newTaskPool(defaultMaxSubscribeWorkers),
 		twp:         twp,
 		tt:          tTree,
@@ -37,7 +37,7 @@ func NewSubscribeWorker(twp *twinsPool, tTree *cabinet.TTree) *subscribeWorker {
 }
 
 // kid : the subscribe-peer-node kadId
-func (s *subscribeWorker) peerNodeSubscribe(prd *twinServiceProvider, qos byte, topic []byte) {
+func (s *SubscribeWorker) peerNodeSubscribe(prd *TwinServiceProvider, qos byte, topic []byte) {
 	if qos == byte(1) {
 		// Todo:process response
 	}
@@ -45,7 +45,7 @@ func (s *subscribeWorker) peerNodeSubscribe(prd *twinServiceProvider, qos byte, 
 	s.tp.submitTask(func() { processPeerNodeSubscribe(s, prd, topic) })
 }
 
-func (s *subscribeWorker) peerNodeUnSubscribe(pubK kademlia.PublicKey, qos byte, topic []byte) {
+func (s *SubscribeWorker) peerNodeUnSubscribe(pubK kademlia.PublicKey, qos byte, topic []byte) {
 	if qos == byte(1) {
 		// Todo:process response
 	}
@@ -55,7 +55,7 @@ func (s *subscribeWorker) peerNodeUnSubscribe(pubK kademlia.PublicKey, qos byte,
 }
 
 // To link the twin for the peer-node to this topic
-func processPeerNodeSubscribe(subW *subscribeWorker, prd *twinServiceProvider, topic []byte) {
+func processPeerNodeSubscribe(subW *SubscribeWorker, prd *TwinServiceProvider, topic []byte) {
 	defer subW.wg.Done()
 
 	err := subW.tt.EntityLink(topic, subW.twp.acquire(prd))
@@ -67,7 +67,7 @@ func processPeerNodeSubscribe(subW *subscribeWorker, prd *twinServiceProvider, t
 }
 
 // To unlink the twin for the peer-node to this topic
-func processPeerNodeUnSubscribe(subW *subscribeWorker, pubK kademlia.PublicKey, topic []byte) {
+func processPeerNodeUnSubscribe(subW *SubscribeWorker, pubK kademlia.PublicKey, topic []byte) {
 	defer subW.wg.Done()
 
 	tw, exist := subW.twp.existTwin(pubK)
@@ -83,10 +83,10 @@ func processPeerNodeUnSubscribe(subW *subscribeWorker, pubK kademlia.PublicKey, 
 	}
 }
 
-func (s *subscribeWorker) Close() {
+func (s *SubscribeWorker) Close() {
 	s.tp.close()
 }
 
-func (s *subscribeWorker) Wait() {
+func (s *SubscribeWorker) Wait() {
 	s.wg.Wait()
 }

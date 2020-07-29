@@ -25,7 +25,7 @@ func TestPublishWorker(t *testing.T) {
 	sKid, err3 := generateKadId()
 	require.NoError(t, err3)
 
-	twp := newTwinsPool()
+	twp := NewTwinsPool()
 	defer twp.close()
 
 	twn, pdn := twp.length()
@@ -35,7 +35,7 @@ func TestPublishWorker(t *testing.T) {
 	require.Equal(t, 0, len(twp.mpp))
 	require.Empty(t, twp.mpt)
 
-	var prd twinServiceProvider = &provider{kadId: sKid}
+	var prd TwinServiceProvider = &provider{kadId: sKid}
 	require.Equal(t, sKid, prd.KadID())
 
 	tw := twp.acquire(&prd)
@@ -168,7 +168,7 @@ func TestPublishWorkerForMultipleSubscribe(t *testing.T) {
 	sKidC, err5 := generateKadId()
 	require.NoError(t, err5)
 
-	twp := newTwinsPool()
+	twp := NewTwinsPool()
 	defer twp.close()
 
 	twn, pdn := twp.length()
@@ -180,7 +180,7 @@ func TestPublishWorkerForMultipleSubscribe(t *testing.T) {
 	require.Empty(t, twp.mpp)
 
 	// section A:
-	var prdA twinServiceProvider = &provider{kadId: sKidA}
+	var prdA TwinServiceProvider = &provider{kadId: sKidA}
 	require.Equal(t, sKidA, prdA.KadID())
 
 	twA := twp.acquire(&prdA)
@@ -190,7 +190,7 @@ func TestPublishWorkerForMultipleSubscribe(t *testing.T) {
 	require.Equal(t, true, twA.online)
 
 	// section B:
-	var prdB twinServiceProvider = &provider{kadId: sKidB}
+	var prdB TwinServiceProvider = &provider{kadId: sKidB}
 	require.Equal(t, sKidB, prdB.KadID())
 
 	twB := twp.acquire(&prdB)
@@ -200,7 +200,7 @@ func TestPublishWorkerForMultipleSubscribe(t *testing.T) {
 	require.Equal(t, true, twB.online)
 
 	// section C:
-	var prdC twinServiceProvider = &provider{kadId: sKidC}
+	var prdC TwinServiceProvider = &provider{kadId: sKidC}
 	require.Equal(t, sKidC, prdC.KadID())
 
 	twC := twp.acquire(&prdC)

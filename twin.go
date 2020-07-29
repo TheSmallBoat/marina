@@ -10,7 +10,7 @@ import (
 const defaultTwinChannelSize = 32 // The default channel size for the twin.
 
 type twin struct {
-	prd *twinServiceProvider
+	prd *TwinServiceProvider
 
 	tc   chan []byte   // The channel in the twin for receiving the data.
 	exit chan struct{} // The channel in the twin for the exit signal of the task.
@@ -27,7 +27,7 @@ type twin struct {
 	transErrSize uint64 // the error count of the transmitting data operation
 }
 
-func newTwin(provider *twinServiceProvider) *twin {
+func newTwin(provider *TwinServiceProvider) *twin {
 	tw := &twin{
 		prd:          provider,
 		tc:           make(chan []byte, defaultTwinChannelSize),
@@ -113,7 +113,7 @@ func (t *twin) reset() {
 	t.transErrSize = 0
 }
 
-func (t *twin) initWithOnline(provider *twinServiceProvider) {
+func (t *twin) initWithOnline(provider *TwinServiceProvider) {
 	t.mu.Lock()
 	t.tc = make(chan []byte, defaultTwinChannelSize)
 	t.prd = provider

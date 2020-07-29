@@ -10,30 +10,30 @@ import (
 const defaultMaxTwinWorkers = 32
 const defaultMaxTwinOfflineTimeDuration = time.Duration(5 * time.Minute)
 
-type twinsPool struct {
+type TwinsPool struct {
 	mu sync.RWMutex
 	sp sync.Pool
 
 	ttp *taskPool
 	// One remote service provider paired with one twin which own the same KadID.
 	mpt map[kademlia.PublicKey]*twin
-	mpp map[kademlia.PublicKey]*twinServiceProvider
+	mpp map[kademlia.PublicKey]*TwinServiceProvider
 
 	maxOfflineTimeDuration time.Duration
 }
 
-func newTwinsPool() *twinsPool {
-	return &twinsPool{
+func NewTwinsPool() *TwinsPool {
+	return &TwinsPool{
 		mu:                     sync.RWMutex{},
 		sp:                     sync.Pool{},
 		ttp:                    newTaskPool(defaultMaxTwinWorkers),
 		mpt:                    make(map[kademlia.PublicKey]*twin),
-		mpp:                    make(map[kademlia.PublicKey]*twinServiceProvider),
+		mpp:                    make(map[kademlia.PublicKey]*TwinServiceProvider),
 		maxOfflineTimeDuration: defaultMaxTwinOfflineTimeDuration,
 	}
 }
 
-func (tp *twinsPool) length() (int, int) {
+func (tp *TwinsPool) length() (int, int) {
 	tp.mu.RLock()
 	defer tp.mu.RUnlock()
 
@@ -41,7 +41,7 @@ func (tp *twinsPool) length() (int, int) {
 }
 
 // return the number of the append providers
-func (tp *twinsPool) appendProviders(providers ...*twinServiceProvider) int {
+func (tp *TwinsPool) appendProviders(providers ...*TwinServiceProvider) int {
 	var pNum = 0
 	for i := range providers {
 		pubK := (*providers[i]).KadID().Pub
@@ -58,7 +58,7 @@ func (tp *twinsPool) appendProviders(providers ...*twinServiceProvider) int {
 }
 
 //return the number of offline-twins, the number of missed-twins
-func (tp *twinsPool) checkTwinsProvidersPairStatus() (int, int) {
+func (tp *TwinsPool) checkTwinsProvidersPairStatus() (int, int) {
 	var pNum, offlineTwinNum = 0, 0
 	for k, tw := range tp.mpt {
 		tp.mu.RLock()
@@ -95,7 +95,7 @@ func (tp *twinsPool) checkTwinsProvidersPairStatus() (int, int) {
 }
 
 /*
-func (tp *twinsPool) pairStatus(pub kademlia.PublicKey) bool {
+func (tp *TwinsPool) pairStatus(pub kademlia.PublicKey) bool {
 	_, pExist := tp.existServiceProvider(pub)
 	tw, tExist := tp.existTwin(pub)
 	if pExist && tExist {
@@ -108,7 +108,7 @@ func (tp *twinsPool) pairStatus(pub kademlia.PublicKey) bool {
 	}
 }*/
 
-func (tp *twinsPool) existServiceProvider(pubK kademlia.PublicKey) (*twinServiceProvider, bool) {
+func (tp *TwinsPool) existServiceProvider(pubK kademlia.PublicKey) (*TwinServiceProvider, bool) {
 	tp.mu.RLock()
 	defer tp.mu.RUnlock()
 
@@ -116,7 +116,7 @@ func (tp *twinsPool) existServiceProvider(pubK kademlia.PublicKey) (*twinService
 	return p, exist
 }
 
-func (tp *twinsPool) existTwin(pubK kademlia.PublicKey) (*twin, bool) {
+func (tp *TwinsPool) existTwin(pubK kademlia.PublicKey) (*twin, bool) {
 	tp.mu.RLock()
 	defer tp.mu.RUnlock()
 
@@ -124,7 +124,7 @@ func (tp *twinsPool) existTwin(pubK kademlia.PublicKey) (*twin, bool) {
 	return tw, exist
 }
 
-func (tp *twinsPool) acquire(provider *twinServiceProvider) *twin {
+func (tp *TwinsPool) acquire(provider *TwinServiceProvider) *twin {
 	if provider == nil || (*provider).KadID() == nil {
 		return nil
 	}
@@ -153,7 +153,7 @@ func (tp *twinsPool) acquire(provider *twinServiceProvider) *twin {
 	return tw
 }
 
-func (tp *twinsPool) release(tw *twin) {
+func (tp *TwinsPool) release(tw *twin) {
 	if tw == nil || tw.prd == nil || (*tw.prd).KadID() == nil {
 		// already reset or kadId pointer equal nil
 		return
@@ -174,7 +174,7 @@ func (tp *twinsPool) release(tw *twin) {
 	tp.sp.Put(tw)
 }
 
-func (tp *twinsPool) close() {
+func (tp *TwinsPool) close() {
 	tp.ttp.close()
 	for _, tw := range tp.mpt {
 		tw.close()

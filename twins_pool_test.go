@@ -51,7 +51,7 @@ func generateKadId() (*kademlia.ID, error) {
 func TestTwinsPool(t *testing.T) {
 	defer goleak.VerifyNone(t)
 
-	tp := newTwinsPool()
+	tp := NewTwinsPool()
 	defer tp.close()
 
 	twn, pdn := tp.length()
@@ -64,7 +64,7 @@ func TestTwinsPool(t *testing.T) {
 	kid1, err1 := generateKadId()
 	require.NoError(t, err1)
 
-	var prd1 twinServiceProvider = &provider{kadId: kid1}
+	var prd1 TwinServiceProvider = &provider{kadId: kid1}
 	tw1 := tp.acquire(&prd1)
 
 	require.Equal(t, true, kid1.Pub == (*tw1.prd).KadID().Pub)
@@ -177,7 +177,7 @@ func TestTwinsPool(t *testing.T) {
 	require.NoError(t, err2)
 	require.Equal(t, false, kid1.Pub == kid2.Pub)
 
-	var prd2 twinServiceProvider = &provider{kadId: kid2}
+	var prd2 TwinServiceProvider = &provider{kadId: kid2}
 	tw2 := tp.acquire(&prd2)
 	require.Equal(t, true, kid2.Pub == (*tw2.prd).KadID().Pub)
 
@@ -270,7 +270,7 @@ func TestTwinsPool(t *testing.T) {
 	kid3, err3 := generateKadId()
 	require.NoError(t, err3)
 
-	var prd3 twinServiceProvider = &provider{kadId: kid3}
+	var prd3 TwinServiceProvider = &provider{kadId: kid3}
 	tw3d := tp.acquire(&prd3)
 	require.Equal(t, true, kid3.Pub == (*tw3d.prd).KadID().Pub)
 	pn = tp.appendProviders(&prd1, &prd2, &prd3)
@@ -292,7 +292,7 @@ func TestTwinsPool(t *testing.T) {
 	tp.release(tw3d)
 	tp.release(tw3d)
 
-	var prd4 twinServiceProvider = &provider{kadId: nil}
+	var prd4 TwinServiceProvider = &provider{kadId: nil}
 	tw4 := tp.acquire(&prd4)
 	tp.release(tw4)
 
@@ -302,7 +302,7 @@ func TestTwinsPool(t *testing.T) {
 }
 
 func BenchmarkTwinsPool(b *testing.B) {
-	tp := newTwinsPool()
+	tp := NewTwinsPool()
 	defer tp.close()
 
 	require.Empty(b, tp.mpt)
@@ -310,7 +310,7 @@ func BenchmarkTwinsPool(b *testing.B) {
 	kid, err1 := generateKadId()
 	require.NoError(b, err1)
 
-	var prd twinServiceProvider = &provider{kadId: kid}
+	var prd TwinServiceProvider = &provider{kadId: kid}
 	tw := tp.acquire(&prd)
 
 	buf := make([]byte, 1400)

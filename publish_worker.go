@@ -11,7 +11,7 @@ import (
 const defaultMaxPublishWorkers = 32
 
 // The publish message-packets come from the producers.
-type publishWorker struct {
+type PublishWorker struct {
 	tp    *taskPool
 	tt    *cabinet.TTree
 	kadId *kademlia.ID //the broker-peer-node kadID
@@ -24,8 +24,8 @@ type publishWorker struct {
 	wg sync.WaitGroup
 }
 
-func NewPublishWorker(bKadId *kademlia.ID, tTree *cabinet.TTree) *publishWorker {
-	return &publishWorker{
+func NewPublishWorker(bKadId *kademlia.ID, tTree *cabinet.TTree) *PublishWorker {
+	return &PublishWorker{
 		tp:        newTaskPool(defaultMaxPublishWorkers),
 		kadId:     bKadId,
 		tt:        tTree,
@@ -36,7 +36,7 @@ func NewPublishWorker(bKadId *kademlia.ID, tTree *cabinet.TTree) *publishWorker 
 	}
 }
 
-func (p *publishWorker) EntitiesNumFor(topic []byte) int {
+func (p *PublishWorker) EntitiesNumFor(topic []byte) int {
 	var entities = p.EntitiesFor(topic)
 	if entities == nil {
 		return 0
@@ -44,7 +44,7 @@ func (p *publishWorker) EntitiesNumFor(topic []byte) int {
 	return len(entities)
 }
 
-func (p *publishWorker) EntitiesFor(topic []byte) []interface{} {
+func (p *PublishWorker) EntitiesFor(topic []byte) []interface{} {
 	entities := make([]interface{}, 0)
 	err := p.tt.LinkedEntities(topic, &entities)
 	if err != nil || len(entities) < 1 {
@@ -53,7 +53,7 @@ func (p *publishWorker) EntitiesFor(topic []byte) []interface{} {
 	return entities
 }
 
-func (p *publishWorker) WorkFor(pkt *MessagePacket) {
+func (p *PublishWorker) WorkFor(pkt *MessagePacket) {
 	if pkt.qos == byte(1) {
 		// Todo:process response
 	}
@@ -63,7 +63,7 @@ func (p *publishWorker) WorkFor(pkt *MessagePacket) {
 }
 
 // To find the matched topic, and put the messagePacket to the twin
-func forwardMessagePacket(pubW *publishWorker, pkt *MessagePacket) {
+func forwardMessagePacket(pubW *PublishWorker, pkt *MessagePacket) {
 	defer pubW.wg.Done()
 
 	pkt.SetBrokerKadId(pubW.kadId)
@@ -93,10 +93,10 @@ func forwardMessagePacket(pubW *publishWorker, pkt *MessagePacket) {
 	atomic.AddUint32(&pubW.pubSucNum, uint32(1))
 }
 
-func (p *publishWorker) Close() {
+func (p *PublishWorker) Close() {
 	p.tp.close()
 }
 
-func (p *publishWorker) Wait() {
+func (p *PublishWorker) Wait() {
 	p.wg.Wait()
 }

@@ -17,7 +17,7 @@ func TestSubscribeWorker(t *testing.T) {
 		require.NoError(t, err)
 	}()
 
-	twp := newTwinsPool()
+	twp := NewTwinsPool()
 	defer twp.close()
 
 	twn, pdn := twp.length()
@@ -33,7 +33,7 @@ func TestSubscribeWorker(t *testing.T) {
 	kid1, err1 := generateKadId()
 	require.NoError(t, err1)
 
-	var prd1 twinServiceProvider = &provider{kadId: kid1}
+	var prd1 TwinServiceProvider = &provider{kadId: kid1}
 	require.Equal(t, kid1, prd1.KadID())
 
 	_ = twp.acquire(&prd1)
@@ -41,19 +41,19 @@ func TestSubscribeWorker(t *testing.T) {
 	kid2, err2 := generateKadId()
 	require.NoError(t, err2)
 
-	var prd2 twinServiceProvider = &provider{kadId: kid2}
+	var prd2 TwinServiceProvider = &provider{kadId: kid2}
 	require.Equal(t, kid2, prd2.KadID())
 
 	kid3, err3 := generateKadId()
 	require.NoError(t, err3)
 
-	var prd3 twinServiceProvider = &provider{kadId: kid3}
+	var prd3 TwinServiceProvider = &provider{kadId: kid3}
 	require.Equal(t, kid3, prd3.KadID())
 
 	kid4, err4 := generateKadId()
 	require.NoError(t, err4)
 
-	var prd4 twinServiceProvider = &provider{kadId: kid4}
+	var prd4 TwinServiceProvider = &provider{kadId: kid4}
 	require.Equal(t, kid4, prd4.KadID())
 
 	sw.peerNodeSubscribe(&prd1, byte(0), []byte("/finance/tom"))
