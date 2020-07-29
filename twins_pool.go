@@ -52,6 +52,7 @@ func (tp *TwinsPool) appendProviders(providers ...*TwinServiceProvider) int {
 			tp.mu.Unlock()
 			pNum++
 		}
+		// acquire twin
 		_ = tp.acquire(providers[i])
 	}
 	return pNum
@@ -71,6 +72,7 @@ func (tp *TwinsPool) removeProviders(providers ...*TwinServiceProvider) (int, in
 		}
 		tw, tExist := tp.existTwin(pubK)
 		if tExist {
+			// offline or release twin
 			excessTwinNum++
 			if tw.onlineStatus() {
 				tw.turnToOffline()
