@@ -18,7 +18,7 @@ func TestSubscribeWorker(t *testing.T) {
 	}()
 
 	twp := NewTwinsPool()
-	defer twp.close()
+	defer twp.Close()
 
 	twn, pdn := twp.length()
 	require.Equal(t, 0, twn)

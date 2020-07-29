@@ -190,7 +190,7 @@ func (tp *TwinsPool) release(tw *twin) {
 	tp.sp.Put(tw)
 }
 
-func (tp *TwinsPool) close() {
+func (tp *TwinsPool) Close() {
 	tp.ttp.close()
 	for _, tw := range tp.mpt {
 		tw.close()

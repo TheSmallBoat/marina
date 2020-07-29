@@ -52,7 +52,7 @@ func TestTwinsPool(t *testing.T) {
 	defer goleak.VerifyNone(t)
 
 	tp := NewTwinsPool()
-	defer tp.close()
+	defer tp.Close()
 
 	twn, pdn := tp.length()
 	require.Equal(t, 0, twn)
@@ -338,7 +338,7 @@ func TestTwinsPool(t *testing.T) {
 
 func BenchmarkTwinsPool(b *testing.B) {
 	tp := NewTwinsPool()
-	defer tp.close()
+	defer tp.Close()
 
 	require.Empty(b, tp.mpt)
 

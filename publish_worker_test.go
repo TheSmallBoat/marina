@@ -26,7 +26,7 @@ func TestPublishWorker(t *testing.T) {
 	require.NoError(t, err3)
 
 	twp := NewTwinsPool()
-	defer twp.close()
+	defer twp.Close()
 
 	twn, pdn := twp.length()
 	require.Equal(t, 0, twn)
@@ -169,7 +169,7 @@ func TestPublishWorkerForMultipleSubscribe(t *testing.T) {
 	require.NoError(t, err5)
 
 	twp := NewTwinsPool()
-	defer twp.close()
+	defer twp.Close()
 
 	twn, pdn := twp.length()
 	require.Equal(t, 0, twn)
