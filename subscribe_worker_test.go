@@ -56,9 +56,9 @@ func TestSubscribeWorker(t *testing.T) {
 	var prd4 TwinServiceProvider = &provider{kadId: kid4}
 	require.Equal(t, kid4, prd4.KadID())
 
-	sw.peerNodeSubscribe(&prd1, byte(0), []byte("/finance/tom"))
-	sw.peerNodeSubscribe(&prd2, byte(0), []byte("/finance/jack"))
-	sw.peerNodeSubscribe(&prd3, byte(1), []byte("/finance/#"))
+	sw.PeerNodeSubscribe(&prd1, byte(0), []byte("/finance/tom"))
+	sw.PeerNodeSubscribe(&prd2, byte(0), []byte("/finance/jack"))
+	sw.PeerNodeSubscribe(&prd3, byte(1), []byte("/finance/#"))
 
 	sw.Wait()
 	require.Equal(t, uint32(3), sw.subSucNum)
@@ -98,7 +98,7 @@ func TestSubscribeWorker(t *testing.T) {
 	}
 	require.Equal(t, 2, i)
 
-	sw.peerNodeUnSubscribe(kid3.Pub, byte(1), []byte("/finance/#"))
+	sw.PeerNodeUnSubscribe(kid3.Pub, byte(1), []byte("/finance/#"))
 	sw.Wait()
 	require.Equal(t, uint32(1), sw.unSubSucNum)
 
@@ -109,12 +109,12 @@ func TestSubscribeWorker(t *testing.T) {
 	twe = entities[0].(*twin)
 	require.Equal(t, twp.acquire(&prd1), twe)
 
-	sw.peerNodeUnSubscribe(kid1.Pub, byte(1), []byte("/finance/tom/jack"))
-	sw.peerNodeUnSubscribe(kid4.Pub, byte(0), []byte("/finance/tom/jack"))
+	sw.PeerNodeUnSubscribe(kid1.Pub, byte(1), []byte("/finance/tom/jack"))
+	sw.PeerNodeUnSubscribe(kid4.Pub, byte(0), []byte("/finance/tom/jack"))
 	sw.Wait()
 	require.Equal(t, uint32(2), sw.unSubErrNum)
 
-	sw.peerNodeUnSubscribe(kid1.Pub, byte(1), []byte("/finance/tom"))
+	sw.PeerNodeUnSubscribe(kid1.Pub, byte(1), []byte("/finance/tom"))
 	sw.Wait()
 	require.Equal(t, uint32(2), sw.unSubSucNum)
 
@@ -123,12 +123,12 @@ func TestSubscribeWorker(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 0, len(entities))
 
-	sw.peerNodeSubscribe(&prd1, byte(0), []byte("/finance/1/tom"))
-	sw.peerNodeSubscribe(&prd2, byte(0), []byte("/finance/1/jack"))
-	sw.peerNodeSubscribe(&prd3, byte(1), []byte("/finance/1/#"))
-	sw.peerNodeSubscribe(&prd1, byte(0), []byte("/finance/2/tom"))
-	sw.peerNodeSubscribe(&prd2, byte(0), []byte("/finance/2/jack"))
-	sw.peerNodeSubscribe(&prd3, byte(1), []byte("/finance/2/#"))
+	sw.PeerNodeSubscribe(&prd1, byte(0), []byte("/finance/1/tom"))
+	sw.PeerNodeSubscribe(&prd2, byte(0), []byte("/finance/1/jack"))
+	sw.PeerNodeSubscribe(&prd3, byte(1), []byte("/finance/1/#"))
+	sw.PeerNodeSubscribe(&prd1, byte(0), []byte("/finance/2/tom"))
+	sw.PeerNodeSubscribe(&prd2, byte(0), []byte("/finance/2/jack"))
+	sw.PeerNodeSubscribe(&prd3, byte(1), []byte("/finance/2/#"))
 	sw.Wait()
 	require.Equal(t, uint32(9), sw.subSucNum)
 
@@ -148,15 +148,15 @@ func TestSubscribeWorker(t *testing.T) {
 	twe = entities[0].(*twin)
 	require.Equal(t, twp.acquire(&prd3), twe)
 
-	sw.peerNodeSubscribe(&prd1, byte(0), []byte("/finance/#/tom"))
-	sw.peerNodeSubscribe(&prd2, byte(0), []byte("/finance/+/jack"))
+	sw.PeerNodeSubscribe(&prd1, byte(0), []byte("/finance/#/tom"))
+	sw.PeerNodeSubscribe(&prd2, byte(0), []byte("/finance/+/jack"))
 	sw.Wait()
 	require.Equal(t, uint32(10), sw.subSucNum)
 	require.Equal(t, uint32(1), sw.subErrNum)
 
-	sw.peerNodeUnSubscribe(kid1.Pub, byte(0), []byte("/finance/#/tom"))
-	sw.peerNodeUnSubscribe(kid2.Pub, byte(0), []byte("/finance/+/jack"))
-	sw.peerNodeUnSubscribe(kid3.Pub, byte(0), []byte("/finance/+/jack"))
+	sw.PeerNodeUnSubscribe(kid1.Pub, byte(0), []byte("/finance/#/tom"))
+	sw.PeerNodeUnSubscribe(kid2.Pub, byte(0), []byte("/finance/+/jack"))
+	sw.PeerNodeUnSubscribe(kid3.Pub, byte(0), []byte("/finance/+/jack"))
 	sw.Wait()
 	require.Equal(t, uint32(3), sw.unSubSucNum)
 	require.Equal(t, uint32(4), sw.unSubErrNum)
