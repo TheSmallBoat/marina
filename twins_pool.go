@@ -124,20 +124,6 @@ func (tp *TwinsPool) checkTwinsProvidersPairStatus() (int, int) {
 	return excessTwinNum, lackingTwinNum
 }
 
-/*
-func (tp *TwinsPool) pairStatus(pub kademlia.PublicKey) bool {
-	_, pExist := tp.existServiceProvider(pub)
-	tw, tExist := tp.existTwin(pub)
-	if pExist && tExist {
-		if !tw.onlineStatus() {
-			tw.turnToOnline()
-		}
-		return true
-	} else {
-		return false
-	}
-}*/
-
 func (tp *TwinsPool) existServiceProvider(pubK kademlia.PublicKey) (*TwinServiceProvider, bool) {
 	tp.mu.RLock()
 	defer tp.mu.RUnlock()
