@@ -57,9 +57,37 @@ func (tp *TwinsPool) appendProviders(providers ...*TwinServiceProvider) int {
 	return pNum
 }
 
-//return the number of offline-twins, the number of missed-twins
+// return the number of the removed providers, the number of excess-twins,
+func (tp *TwinsPool) removeProviders(providers ...*TwinServiceProvider) (int, int) {
+	var pNum, excessTwinNum = 0, 0
+	for i := range providers {
+		pubK := (*providers[i]).KadID().Pub
+		_, pExist := tp.existServiceProvider(pubK)
+		if pExist {
+			tp.mu.Lock()
+			delete(tp.mpp, pubK)
+			tp.mu.Unlock()
+			pNum++
+		}
+		tw, tExist := tp.existTwin(pubK)
+		if tExist {
+			excessTwinNum++
+			if tw.onlineStatus() {
+				tw.turnToOffline()
+			} else {
+				// Releasing the twin that has been offline for too long.
+				if time.Since(tw.scTime) > tp.maxOfflineTimeDuration {
+					tp.release(tw)
+				}
+			}
+		}
+	}
+	return pNum, excessTwinNum
+}
+
+//return the number of excess-twins, the number of lacking-twins
 func (tp *TwinsPool) checkTwinsProvidersPairStatus() (int, int) {
-	var pNum, offlineTwinNum = 0, 0
+	var pNum, excessTwinNum = 0, 0
 	for k, tw := range tp.mpt {
 		tp.mu.RLock()
 		_, exist := tp.mpp[k]
@@ -71,7 +99,7 @@ func (tp *TwinsPool) checkTwinsProvidersPairStatus() (int, int) {
 				tw.turnToOnline()
 			}
 		} else {
-			offlineTwinNum++
+			excessTwinNum++
 			if tw.onlineStatus() {
 				tw.turnToOffline()
 			} else {
@@ -83,15 +111,15 @@ func (tp *TwinsPool) checkTwinsProvidersPairStatus() (int, int) {
 		}
 	}
 
-	missedTwinNum := len(tp.mpp) - pNum
-	if missedTwinNum > 0 {
+	lackingTwinNum := len(tp.mpp) - pNum
+	if lackingTwinNum > 0 {
 		//  means some of providers haven't the pair twins.
 		for _, pd := range tp.mpp {
 			_ = tp.acquire(pd)
 		}
 	}
 
-	return offlineTwinNum, missedTwinNum
+	return excessTwinNum, lackingTwinNum
 }
 
 /*
