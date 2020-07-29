@@ -292,13 +292,48 @@ func TestTwinsPool(t *testing.T) {
 	tp.release(tw3d)
 	tp.release(tw3d)
 
+	twn, pdn = tp.length()
+	require.Equal(t, 0, twn)
+	require.Equal(t, 0, len(tp.mpt))
+	require.Equal(t, 3, pdn)
+	require.Equal(t, 3, len(tp.mpp))
+
 	var prd4 TwinServiceProvider = &provider{kadId: nil}
 	tw4 := tp.acquire(&prd4)
+	require.Equal(t, (*twin)(nil), tw4)
 	tp.release(tw4)
 
 	otn, mtn = tp.checkTwinsProvidersPairStatus()
 	require.Equal(t, 0, otn)
 	require.Equal(t, 3, mtn)
+
+	twn, pdn = tp.length()
+	require.Equal(t, 3, twn)
+	require.Equal(t, 3, len(tp.mpt))
+	require.Equal(t, 3, pdn)
+	require.Equal(t, 3, len(tp.mpp))
+
+	// section 6:
+	rpn, etn := tp.removeProviders(&prd1, &prd2, &prd3)
+	require.Equal(t, 3, rpn)
+	require.Equal(t, 3, etn)
+
+	twn, pdn = tp.length()
+	require.Equal(t, 3, twn)
+	require.Equal(t, 3, len(tp.mpt))
+	require.Equal(t, 0, pdn)
+	require.Equal(t, 0, len(tp.mpp))
+
+	time.Sleep(5 * time.Millisecond)
+	rpn, etn = tp.removeProviders(&prd1, &prd2, &prd3)
+	require.Equal(t, 0, rpn)
+	require.Equal(t, 3, etn)
+
+	twn, pdn = tp.length()
+	require.Equal(t, 0, twn)
+	require.Equal(t, 0, len(tp.mpt))
+	require.Equal(t, 0, pdn)
+	require.Equal(t, 0, len(tp.mpp))
 }
 
 func BenchmarkTwinsPool(b *testing.B) {

@@ -8,7 +8,7 @@ import (
 )
 
 const defaultMaxTwinWorkers = 32
-const defaultMaxTwinOfflineTimeDuration = time.Duration(5 * time.Minute)
+const defaultMaxTwinOfflineTimeDuration = 5 * time.Minute
 
 type TwinsPool struct {
 	mu sync.RWMutex

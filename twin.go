@@ -68,12 +68,6 @@ func (t *twin) pushMessagePacketToChannel(pkt []byte) error {
 	return nil
 }
 
-/*
-func (t *twin) pullMessagePacketFromChannel() ([]byte, bool) {
-	pkt, ok := <-t.tc
-	return pkt, ok
-}*/
-
 func (t *twin) turnToOffline() {
 	if t.onlineStatus() {
 		t.exit <- struct{}{}
